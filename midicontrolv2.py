@@ -2,20 +2,25 @@
 
 # This program is to control a Clearone Converge DSP using a Midi Control Surface
 #
-# Supported Clearone Commands:
-#	MTRXLVL - Matrix level crosspoint gain adjustments - map to faders on midi controller to give channel fader control.
-#	MUTE - Channel Mute - Map to buttons to toggle mute for channel
-#   GMODE - Map to buttons on midi controller to toggle gate mode for channel between auto and manual on
-#	MMAX - Adjust the maximum number of Micx in a gating group - Map to rotary encoders on midi controller
-#	
 # Midi Controller motors can be disabled or enabled by mapping button in the XML
 #
-# All Configuration is done in midicontrol.xml, don't change the order of anything in the xml file or the 
-# program may fail.
+# All Configuration is done in midi.xml
 # 
-# Make sure you have a backup of the Clearone Configuration, or at least presets setup for the Matrix Corss points and Mutes you 
-# are going to be changing before using this program.
-
+# Make sure you have a backup of the Clearone Configuration.
+#
+#  4 types of variables can be changed:
+#		*v - the standard type used by most faders, toggle buttons and absolute encoders.  Format is *v , minimum value , maximum value, eg. *v-65,20 a toggle would be *v0,1
+#			 This is all you need for the Behringer BCF2000 and TouchOSC, the next 2 a needed for the icon i-Control pro and possible other controllers we haven't tested.
+#		*m - the type used for momentary button, eg buttons that send an on when pushed and off when released, these can alternate between 2 values	
+#			 format is *m , off value , on value eg. *m0,1
+#		*e - the type used for incremental encoders when you need to change and absolute value.  Format is *e, increment midi value, decrement midi value, increment step, decrement step
+#			 eg. *e1,127,.5,-.5
+#		*f - this is for values that presents before the value we want to change (the *v, *e, *m value) and not requried when querying the clearone for the value.
+#			 This is so the program knows not to send it if request just for status.
+#
+#	Known Limitations:
+#		- 	Can only send commands that need a channel and group argument.  Example, GMODE can't be sent as it doesn't have the group included in it, you can use XGMODE instead as this 
+#			has the Channel and Group.
 
 import mido
 import socket               # Import socket module
@@ -50,10 +55,6 @@ DeviceID = xml['ClearOneMidiControl']['Clearone']['Communication']['DeviceID']
 MidiInPortName = xml['ClearOneMidiControl']['MidiController']['MidiPorts']['In']
 MidiOutPortName = xml['ClearOneMidiControl']['MidiController']['MidiPorts']['Out']
 
-#MMAX =
-#[int(MidiController[3][0]),int(MidiController[3][1]),MidiController[3
-#][2]]
-## 
 #Motor Enable and Disable Command -list of Status, Param 1 and Param 2
 MotorENMidi = [int(xml['ClearOneMidiControl']['MidiController']['MotorENMidi']['Status']),int(xml['ClearOneMidiControl']['MidiController']['MotorENMidi']['Param1']),int(xml['ClearOneMidiControl']['MidiController']['MotorENMidi']['Value'])] 
 MotorDISMidi = [int(xml['ClearOneMidiControl']['MidiController']['MotorDISMidi']['Status']),int(xml['ClearOneMidiControl']['MidiController']['MotorDISMidi']['Param1']),int(xml['ClearOneMidiControl']['MidiController']['MotorDISMidi']['Value'])] 
@@ -76,7 +77,7 @@ except:
 	print "\n---------------------------------------\nAvailable Output Ports:\n"
 	for p in mido.get_output_names():
 		print p
-	print "\n---------------------------------------\nEnsure midi device is connected\n\nChange midi ports in  midicontrol.xml\n\n\n\n\n"
+	print "\n---------------------------------------\nEnsure midi device is connected\n\nChange midi ports in  midi.xml\n\n\n\n\n"
 	sys.exit(0)
 # Send the Motor Disable message to the midi device
 msg = mido.parse(MotorDISMidi)	
@@ -84,8 +85,11 @@ midiOut.send(msg)
 
 motorEN = False  #Global variable for enabling motors
 run = False
-pMidi = True
+pMidi = True	
 MomentaryBP = False
+minmax = ''
+Encoder = False
+ec = []
 
 def translate(value, leftMin, leftMax, rightMin, rightMax):   #Same as map in java, arduino etc...
     leftSpan = leftMax - leftMin
@@ -117,13 +121,16 @@ def connectClearone():    #Connect to the clearone
 			if timeout == 61:
 				print "To many failed retry attempts...\nExiting Program."
 				sys.exit(0)
-			
+	#Find / wait for the user prompt then enter the username
 	while s.recv(512).find('user') < 0:
 		pass
 	s.send(clearoneUser + "\r")
+	#find / wait for the pass prompt then enter password
 	while s.recv(512).find('pass') < 0:
 		pass
 	s.send(clearonePass + "\r")
+	
+	#confirm login was successful, otherwise exit program
 	while s.recv(512).find('Authenticated') < 0:
 		if s.recv(512).find('Invalid') < 0:
 			print "Invalid User/Pass." 
@@ -134,7 +141,7 @@ def connectClearone():    #Connect to the clearone
 
 def telnet(data):   #Send data to clearone via telnet, attempts to re-connect if there is a problem.
 	global s
-	#print data
+	print "telnet: " + data
 	try:
 		s.send(data)
 	except Exception as e: 
@@ -143,20 +150,21 @@ def telnet(data):   #Send data to clearone via telnet, attempts to re-connect if
 		connectClearone()
 		s.send(data)
 
-def createMidi(Status, value, Param1):
+def createMidi(Status, value, Param1):  #Convert midi bytes to midi command for mido to send
 	
 	if Param1 == '':
 		Param1 = value
-	
-	#print Param1
 	msg = mido.parse([int(Status), int(Param1), value])  #generate and send the midi message
-	#print msg
+	print msg
 	return msg
 			
 def processRX(data):   #Process data received from clearone via telnet and translate and pass to midi controller
 	global motorEN
 	global MomentaryBP
-
+	global minmax
+	global Encoder
+	global ec
+	print "Received: " + data
 	dataTemp = data.split('\r')  #Split the received data by lines
 	indices = [i for i, s in enumerate(dataTemp) if '#' in s]  #find which list item contains the command string (#)
 	#print dataTemp
@@ -169,59 +177,86 @@ def processRX(data):   #Process data received from clearone via telnet and trans
 	if start < 0:			#check if a command is contained in the string, otherwise return
 		#print "Invalid Data"
 		return
-		
-	dataSplit = data[start:].split(' ')   #split command string by spaces 
-	rxModel = dataSplit[0][1:-1]		#Get model code from 1st list item
-	rxDeviceID = dataSplit[0][2:]		#Get device id from 1st list item
+	try:	
+		dataSplit = data[start:].split(' ')   #split command string by spaces 
+		rxModel = dataSplit[0][1:-1]		#Get model code from 1st list item
+		rxDeviceID = dataSplit[0][2:]		#Get device id from 1st list item
 	
-	rxCommand = dataSplit[1]		# Get the command type from data string - Mute or Matrix Level at the moment
-	if rxCommand == 'VER':
+		rxCommand = dataSplit[1]		# Get the command type from data string - Mute or Matrix Level at the moment
+		if rxCommand == 'VER':
+			return
+		channel = dataSplit[2]				#get Clearone channel and group from data string
+		group = dataSplit[3]
+	except:
+		print "Weird Data"
 		return
-	channel = dataSplit[2]				#get Clearone channel and group from data string
-	group = dataSplit[3]
-	
+	#iterate through commands in xml 
 	for C in Commands:
 		ClearoneCommand = Commands[C]['Clearone']
 		MidiCommand = Commands[C]['Midi']
 		
-		if ClearoneCommand['DeviceType'] is None:
+		if ClearoneCommand['DeviceType'] is None:  #if devicetype is blank skip assume the command is blank and skip
 			continue
+		#Check if cureny command recieved from clearone matches command in xml, if match process it.
 		if ClearoneCommand['DeviceType'] == rxModel and ClearoneCommand['DeviceID'] == rxDeviceID and ClearoneCommand['Command'] == rxCommand and ClearoneCommand['Group'] == group and ClearoneCommand['Channel'] == channel:
+			
+			#find the index position of the Variable that needs to be changed (prefix *m, *v or *e)
 			valueIndex = 3
-			for i in range(1,5):
+			for i in ClearoneCommand['Values']:
 				valueIndex += 1
-				if ClearoneCommand['Values']['_' + str(i)][:2] == '*v' or ClearoneCommand['Values']['_' + str(i)][:2] == '*m':
+				if ClearoneCommand['Values'][i][:2] == '*v' or ClearoneCommand['Values'][i][:2] == '*m'or ClearoneCommand['Values'][i][:2] == '*e':
 					break
 			value = dataSplit[valueIndex]
 			
-			if MomentaryBP:
-				
-				if int(value) == 1:
-					m = data[:-1] + '0\r'
-				if int(value) == 0:
-					m = data[:-1] + '1\r'
+			if MomentaryBP:   #Check if a momentary button was presseed, cause then the value needs to be changed and sent back to the clearone
+				print data, minmax, value
+				if int(value) == int(minmax[0]):
+					
+					m = data[:-1] + minmax[1] + '\r'
+				if int(value) == int(minmax[1]):
+					
+					m = data[:-1] + minmax[0] + '\r'
 				MomentaryBP = False
 				telnet(m)
 				return
-			minmax = ClearoneCommand['Values']['_' + str(i)][2:].split(',')
-			value = int(translate(float(value), float(minmax[0]),float(minmax[1]),0,127))
+				
+			if Encoder:			#Check if encoder was changed, again the value needs to be incremented or decremented then sent back to the clearone.
+				Encoder = False
+				m = "#" + rxModel + rxDeviceID + ' ' + rxCommand + ' ' + channel + ' ' + group
 
-			if MidiCommand['Param1'] is None:
-				midiOut.send(createMidi(MidiCommand['Status'], value, ''))
-			else:
-				midiOut.send(createMidi(MidiCommand['Status'], value, MidiCommand['Param1']))
-			return
-	# if rxModel != Model or rxDeviceID != DeviceID:   #Make sure we are communicating with the correct clearone converge
-# 		print "Wrong Model / Device"
-# 		return;
+				value = str(float(value) + float(ec[0]))
+				
+				for i in ec[1]:
+					
+					if ec[1][i][:2] == '*f':
+						
+						m = m + ' ' + ec[1][i][2:]
+						continue	
+					if ec[1][i][:2] == '*e':
+						m = m + ' ' + value
+					else:
+						m = m + ' ' + ec[1][i]
+				
+				
+				ec = []
+				m = m + '\r'
+				telnet(m)
+				return
+				
+				
+			minmax = ClearoneCommand['Values'][i][2:].split(',')
+			value = int(translate(float(value), float(minmax[0]),float(minmax[1]),0,127))  #Map the min and max values to between 0-127 for the midi device.
+
+			try:
+				if MidiCommand['Param1'] is None:
+					midiOut.send(createMidi(MidiCommand['Status'], value, ''))
+				else:
+					midiOut.send(createMidi(MidiCommand['Status'], value, MidiCommand['Param1']))
+				return
+			except: #An error will occur if it is a *e and the value goes out of range (0-127), the map function won't work properly because it doesn't know the min and max values
+					#At the moment this is something that can be lived with because the encoders on the icon don't have any feedback and that is the only thing that can trigger this fault.
+				print "MIDI Command Creation Error, proably using an incremental encoder and the value is negative: VALUE=" + str(value)
 	
-			# return from function as there is no point in continuing to search for matches
-# 	
-# 	if rxCommand == 'MTRXLVL' and motorEN == True:
-# 		value = dataSplit[6]
-# 		value = int(translate(float(value), -60,12,0,127))
-# 		midiOut.send(createMidi(Faders, channel, value, group))
-# 		return				# return from function as there is no point in continuing to search for matches
 
 				
 				
@@ -235,30 +270,34 @@ def getStatus():  #Get the stus of the clearone and sets the Midi Control Surfac
 		
 		if MidiCommand['DeviceType'] is None:
 			continue
+		if MidiCommand['Group'] is None:
+			MidiCommand['Group'] = ''
+ 
 		m = '#' + MidiCommand['DeviceType'] + MidiCommand['DeviceID'] + ' ' + MidiCommand['Command'] + ' ' + MidiCommand['Channel'] + ' ' + MidiCommand['Group']
 		
-		for i in range(1,5):
-			if MidiCommand['Values']['_' + str(i)][:2] == '*v' or MidiCommand['Values']['_' + str(i)][:2] == '*m':
+		for i in MidiCommand['Values']:
+			if MidiCommand['Values'][i][:2] == '*v' or MidiCommand['Values'][i][:2] == '*m' or MidiCommand['Values'][i][:2] == '*f' or MidiCommand['Values'][i][:2] == '*e':
 				break
-			m = m + ' ' + MidiCommand['Values']['_' + str(i)]
+			m = m + ' ' + MidiCommand['Values'][i]
 
 		m = m + '\r'
-		#print m
 		telnet(m)
 		sleep(.05)
 		
-		#processRX(s.recv(512))
-	motorEN = False			# Disable the motors as default
+		processRX(s.recv(512))
+	#motorEN = False			# Disable the motors as default
 	#sys.exit(0)
-	startThreads()	
+	
 	
 		
 def processMidiRX(data): #Process received midi messages from control surface
 	global motorEN
 	global pMidi
 	global MomentaryBP
-	
-	#print data
+	global Encoder
+	global minmax
+	global ec
+	print data
 	
 	if pMidi == False:
 		return
@@ -278,52 +317,75 @@ def processMidiRX(data): #Process received midi messages from control surface
 		return
 		
 	m = ''
-	for C in Commands:
+	for C in Commands:  #iterate through the commands in the xml and try to match the midi bytes to what was sent.
 		MidiCommand = Commands[C]['Midi']
 		if MidiCommand['Status'] is None:
 			continue
 	
-		if (MidiCommand['Status'] == str(command)) and (MidiCommand['Param1'] is None or MidiCommand['Param1'] == str(input)):
+		if (MidiCommand['Status'] == str(command)) and (MidiCommand['Param1'] is None or MidiCommand['Param1'] == str(input)): #matching the midi bytes to what is in the xml
 			
 			ClearoneCommand = Commands[C]['Clearone']
+			#m is the variable used to build the command to send to the clearone
 			m = '#' + ClearoneCommand['DeviceType'] + ClearoneCommand['DeviceID'] + ' ' + ClearoneCommand['Command'] + ' ' + ClearoneCommand['Channel'] + ' ' + ClearoneCommand['Group']
-			
-			for i in range(1,5):
-				if ClearoneCommand['Values']['_' + str(i)] is None:
+			#e is the temp variable to stop building the command if a *f is encountered, it is used if an incremental encoder is used to adjust a value.
+			e = m
+			#f indicates if a *f value has been encountered.
+			f = False
+			for i in ClearoneCommand['Values']:  #iterate through the values key with the xml
+				if ClearoneCommand['Values'][i] is None: #if it encounters a blank key stop iterating
 					break
 				
+				if not f:  # while *f hasn't been encountered e should continue to be the same as m
+						e = m
 				###  Value Change ###
-				if ClearoneCommand['Values']['_' + str(i)][:2] == '*m':
+				minmax = ClearoneCommand['Values'][i][2:].split(',')
+				
+				if ClearoneCommand['Values'][i][:2] == '*m':  # Midi button controlling this is a momentary button
 					if value == 127:
-						MomentaryBP = True
-						
+						MomentaryBP = True	
+					break
+					
+				if ClearoneCommand['Values'][i][:2] == '*e': # Midi control for this is an encoder
+					 #not truly minmax, this becomes the *e..... list 
+					Encoder = True
+					if value == int(minmax[0]):
+						ec.append(minmax[2])   #ec is a list for the encoder commands, first is the incremental value, followed by a dictionary of the values for the current command.
+						#ec is so that when the command is processed from the clearone the values for sending the update command are known.
+					if value == int(minmax[1]):
+						ec.append(minmax[3])
+					ec.append(ClearoneCommand['Values'])  #append the valus dictionay to the ec list.
+					m = e
 					break
 				
-				if ClearoneCommand['Values']['_' + str(i)][:2] == '*v':
-					minmax = ClearoneCommand['Values']['_' + str(i)][2:].split(',')
-					gain = round(translate(float(value),0,127,float(minmax[0]),float(minmax[1])),1)
-					gainInt =  str(gain).split('.')[0]
-					gainDec = str(gain).split('.')[1]
+				if ClearoneCommand['Values'][i][:2] == '*f':	# A value that does not need to be sent when requesting current values.
+					f = True
+					m = m + ' ' + ClearoneCommand['Values'][i][2:]  #if a *f is encountered add everything after the *f to the m string.  Now that f is true, e will stop updating to m.
+					continue
+					
+				if ClearoneCommand['Values'][i][:2] == '*v':	# the Variable that needs to be changed in the string
+					minmax = ClearoneCommand['Values'][i][2:].split(',') #get the min and max values for the clearone command
+					gain = round(translate(float(value),0,127,float(minmax[0]),float(minmax[1])),1)   #map the min and max to 0 - 127 for midi usage
+					# As we are dealing with a rounded float, it will always have a decimal even if it's a whole number (1.0).  The following removes the decimal if
+					# the value is a whole number, this is so the same funcation can be used for toggles such as mutes and gate and these commands don't have decimals and 
+					# the clearone would throw an error if we sent it a decimal.
+					gainInt =  str(gain).split('.')[0]		
+					gainDec = str(gain).split('.')[1]    
 					if gainDec == '0':
 						gain = gainInt
 					else:
 						gain = gainInt + '.' + gainDec
 					m = m + ' ' + gain
 				else:	
-					m = m + ' ' + ClearoneCommand['Values']['_' + str(i)]
+					m = m + ' ' + ClearoneCommand['Values'][i]
 				### Momentary Button Press ###
 				
 					
 		
 	m = m + '\r'
-	#print m
+
 		
 	telnet(m)
 		
-				
-				
-		
-	
 #Threading is used so there is no need to worry about using non-blocking receive commands and dealing with them.
 #One thread for listening for Midi and another for listening for Telnet messages
 
@@ -347,12 +409,12 @@ def socketRX(threadname, dat):   #thread to listen to telnet socket messages
 				pass
 			except Exception as e: 
 				print(e)
-				#print "Call Connect"
+				
 				s = socket.socket()
 				connectClearone()
 				processRX(msg)
 				
-def startThreads():   #Stop the clearone disconnecting the telnet session by making a request every 5 minutes.
+def startThreads(): 
 	global run
 	run = True			#Keeps threads runnning
 	try:					#start Threads
@@ -363,14 +425,15 @@ def startThreads():   #Stop the clearone disconnecting the telnet session by mak
 
 		
 #################################################### Main Pogram Starts Here #############################################################################
-connectClearone()  #Connect the clearone
-clearBuffer()		#clear the telnet socket buffer
-getStatus()			#Get status of clearone and set control surface faders to match
 
+connectClearone()  #Connect the clearone
+#clearBuffer()		#clear the telnet socket buffer, not sure if this is nesscesary
+getStatus()			#Get status of clearone and set control surface faders to match
+startThreads()	
 	
 
 #socketRX("t",True)
-while True:
+while True:    #Stop the clearone disconnecting the telnet session by making a request every 5 minutes.
 	m = '#' + Model + DeviceID + ' VER\r'
 	telnet(m)
 	sleep(300)
