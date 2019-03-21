@@ -403,9 +403,9 @@ def socketRX(threadname, dat):   #thread to listen to telnet socket messages
 		while run:   #loop while run is true
 			try:
 				msg = s.recv(512)
-				pMidi = False
+				#pMidi = False
 				processRX(msg)
-				pMidi = True
+				#pMidi = True
 				pass
 			except Exception as e: 
 				print(e)
