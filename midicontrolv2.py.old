@@ -28,11 +28,6 @@ from time import sleep
 import thread
 import sys
 import xmltodict
-import RPi.GPIO as GPIO
-
-########### Setup GPOIO ################
-
-GPIO.setmode(GPIO.BOARD)
 
 ########### Load XML ######################
 print "\n\n**********************************\n  Clearone Converge MIDI control\n**********************************\n\n......Loading XML.....\n"
@@ -65,17 +60,6 @@ MotorENMidi = [int(xml['ClearOneMidiControl']['MidiController']['MotorENMidi']['
 MotorDISMidi = [int(xml['ClearOneMidiControl']['MidiController']['MotorDISMidi']['Status']),int(xml['ClearOneMidiControl']['MidiController']['MotorDISMidi']['Param1']),int(xml['ClearOneMidiControl']['MidiController']['MotorDISMidi']['Value'])] 
 
 Commands= xml['ClearOneMidiControl']['Commands']
-
-##### GPIO Information   #######
-Pins = xml['ClearOneMidiControl']['GPIO']
-
-
-for C in Pins:
-	GPIO.setup(int(Pins[C]['InPin']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)	
-	GPIO.setup(int(Pins[C]['OutPin']), GPIO.OUT)	
-	GPIO.output(int(Pins[C]['OutPin']), 1)
-
-#### GPIO SETUP #####
 
 print "......XML Loading Complete......\n"
 s = socket.socket()         
@@ -213,7 +197,7 @@ def processRX(data):   #Process data received from clearone via telnet and trans
 		
 		if ClearoneCommand['DeviceType'] is None:  #if devicetype is blank skip assume the command is blank and skip
 			continue
-		#Check if current command received from clearone matches command in xml, if match process it.
+		#Check if cureny command recieved from clearone matches command in xml, if match process it.
 		if ClearoneCommand['DeviceType'] == rxModel and ClearoneCommand['DeviceID'] == rxDeviceID and ClearoneCommand['Command'] == rxCommand and ClearoneCommand['Group'] == group and ClearoneCommand['Channel'] == channel:
 			
 			#find the index position of the Variable that needs to be changed (prefix *m, *v or *e)
@@ -226,14 +210,17 @@ def processRX(data):   #Process data received from clearone via telnet and trans
 			
 			if MomentaryBP:   #Check if a momentary button was presseed, cause then the value needs to be changed and sent back to the clearone
 				print data, minmax, value
-				if int(value) == int(minmax[0]):
+				try:
+					if int(value) == int(minmax[0]):
 					
-					m = data[:-1] + minmax[1] + '\r'
-				if int(value) == int(minmax[1]):
+						m = data[:-1] + minmax[1] + '\r'
+					if int(value) == int(minmax[1]):
 					
-					m = data[:-1] + minmax[0] + '\r'
-				MomentaryBP = False
-				telnet(m)
+						m = data[:-1] + minmax[0] + '\r'
+					MomentaryBP = False
+					telnet(m)
+				except:
+					print "Bad Button Data, probably moving to much at once"
 				return
 				
 			if Encoder:			#Check if encoder was changed, again the value needs to be incremented or decremented then sent back to the clearone.
@@ -246,7 +233,7 @@ def processRX(data):   #Process data received from clearone via telnet and trans
 					
 					if ec[1][i][:2] == '*f':
 						
-						m = m + ' ' + ec[1][i][2:]		
+						m = m + ' ' + ec[1][i][2:]
 						continue	
 					if ec[1][i][:2] == '*e':
 						m = m + ' ' + value
@@ -262,12 +249,7 @@ def processRX(data):   #Process data received from clearone via telnet and trans
 				
 			minmax = ClearoneCommand['Values'][i][2:].split(',')
 			value = int(translate(float(value), float(minmax[0]),float(minmax[1]),0,127))  #Map the min and max values to between 0-127 for the midi device.
-			for C in Pins:
-				if MidiCommand['Status'] == Pins[C]['MidiStatus'] and MidiCommand['Param1'] == Pins[C]['MidiParam1']:
-					if value > 0:
-						GPIO.output(int(Pins[C]['OutPin']), 1)
-					else:
-						GPIO.output(int(Pins[C]['OutPin']), 0)
+
 			try:
 				if MidiCommand['Param1'] is None:
 					midiOut.send(createMidi(MidiCommand['Status'], value, ''))
@@ -442,30 +424,7 @@ def processMidiRX(data): #Process received midi messages from control surface
 #Threading is used so there is no need to worry about using non-blocking receive commands and dealing with them.
 #One thread for listening for Midi and another for listening for Telnet messages
 
-def gpioRX(threadname, dat):   #thread to listen for midi messages
-		global run
-		pinStatus = False
-		pinTriggered = ''
-		print "GPIO Thread Started"
-		while run:   #loop while run is true
-			sleep(.05)
-			for C in Pins:
-				if GPIO.input(int(Pins[C]['InPin'])):
-					pinTriggered = C
-					
-					print "Pin Triggered: " + C
-					Status = Pins[C]['MidiStatus']
-					Param1 = Pins[C]['MidiParam1']
-					msg = [int(Status), int(Param1), 127]
-					if not pinStatus:
-						processMidiRX(msg)
-					pinStatus = True
-				else:
-					if pinTriggered == C:
-						pinStatus = False						
-
 def midiRX(threadname, dat):   #thread to listen for midi messages
-		global run
 		print "Midi Thread Started"
 		while run:   #loop while run is true
 			
@@ -475,14 +434,13 @@ def midiRX(threadname, dat):   #thread to listen for midi messages
 def socketRX(threadname, dat):   #thread to listen to telnet socket messages
 		global s
 		global pMidi
-		global run
 		print "Telnet Thread Started"
 		while run:   #loop while run is true
 			try:
 				msg = s.recv(512)
-				#pMidi = False
+				pMidi = False
 				processRX(msg)
-				#pMidi = True
+				pMidi = True
 				pass
 			except Exception as e: 
 				print(e)
@@ -497,7 +455,6 @@ def startThreads():
 	try:					#start Threads
 		thread.start_new_thread( midiRX, ("mt",True))			
 		thread.start_new_thread( socketRX, ("tt", True))
-		thread.start_new_thread( gpioRX, ("tt", True))
 	except:
 	   print "Error: unable to start threads"
 
