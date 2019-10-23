@@ -12,8 +12,8 @@ midi_controller = {
         "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0"
 }
    
-################## FADERS ##################
 commands = {
+################## FADERS ##################   
     "_1" : {
         "clearone": {
             "device" : "H2",
@@ -23,6 +23,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 224
         } 
     },
@@ -35,6 +36,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 225
         } 
     },
@@ -47,6 +49,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 226
         } 
     },
@@ -59,6 +62,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 227
         } 
     },
@@ -71,6 +75,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 228
         } 
     },
@@ -83,6 +88,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 229
         } 
     },
@@ -95,6 +101,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "absolute",
             "status" : 232
         } 
     },
@@ -109,6 +116,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "momentary",
             "status" : 144,
             "param" : 16
         } 
@@ -123,6 +131,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "momentary",
             "status" : 144,
             "param" : 17
         } 
@@ -137,6 +146,7 @@ commands = {
             "default" : "0"
         },
         "midi" : {
+            "type" : "momentary",
             "status" : 144,
             "param" : 18
         } 
@@ -148,9 +158,10 @@ commands = {
             "get_command" : "MUTE D P",
             "max" : "1",
             "min" : "0",
-            "default" : "0"
+            "default" : "1"
         },
         "midi" : {
+            "type" : "momentary",
             "status" : 144,
             "param" : 19
         } 
@@ -162,9 +173,10 @@ commands = {
             "get_command" : "MUTE E P",
             "max" : "1",
             "min" : "0",
-            "default" : "0"
+            "default" : "1"
         },
         "midi" : {
+            "type" : "momentary",
             "status" : 144,
             "param" : 20
         } 
@@ -176,9 +188,10 @@ commands = {
             "get_command" : "MUTE 1 F",
             "max" : "1",
             "min" : "0",
-            "default" : "0"
+            "default" : "1"
         },
         "midi" : {
+            "type" : "momentary",        
             "status" : 144,
             "param" : 21
         } 
@@ -191,10 +204,11 @@ commands = {
             "get_command" : "FILTER H P 1",
             "inc" : "1",
             "dec" : "127",
-            "step" : ",5",
+            "step" : ".5",
             "default" : "0"
         },
         "midi" : {
+            "type" : "incremental",
             "status" : 176,
             "param" : 22
         } 
@@ -203,13 +217,14 @@ commands = {
         "clearone": {
             "device" : "H2",
             "set_command" : "FILTER H P 2 6 20000 %s 3.7",
-            "get_command" : "FILTER H P 1",
+            "get_command" : "FILTER H P 2",
             "inc" : "1",
             "dec" : "127",
-            "step" : ",5",
+            "step" : ".5",
             "default" : "0"
         },
         "midi" : {
+            "type" : "incremental",
             "status" : 176,
             "param" : 23
         } 

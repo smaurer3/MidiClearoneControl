@@ -1,48 +1,78 @@
-import telnetlib 
+import socket
 
-telnet_timeout = 2
+class clearone:
+    def __init__(self, device):
+        self.telnet_timeout = 2
+        self.telnet_port = 23
+        self.device = None
+        self.hostname = device[0]
+        self.username = device[1]
+        self.password = device[2]
+        self.login()
+        
 
-def clearone_login(hostname, username, password):
-    device = None
-    (output, status) = connect_clearone(hostname, username, password)
-    if status == "OK":
-        device = output
-        (output, status) = authenticate_clearone(username, password, device)
-    if device is not None:
-            device.close()     
-    return (output, status)
+    def login(self):
+        try:
+            self.device.close()
+            self.device = None
+        except:
+            pass
+        status = self.connect(self.hostname)
+        if not status:
+            return ( False,"Could not Connect to Clearone")
+        status = self.authenticate(self.username, self.password)
+        if not status:
+            return ( False, "Could not Authenticate to Clearone")
+        return (True, "Connected and Login Succesful")
 
-def connect_clearone(clearone_ip): 
-    device = None
-    try:
-        device = telnetlib.Telnet(clearone_ip, port=23, timeout=telnet_timeout)
-    except Exception as e: 
-        return ("Unable to Connect", "CRITICAL")
-    return (device, "OK")
+    def connect(self, clearone_ip): 
+        try:
+            self.device = socket.socket()
+            self.device.connect((clearone_ip, self.telnet_port))
+        except Exception as e: 
+            return (False)
+        return (True)
 
-def authenticate_clearone(clearone_user, clearone_pass, device):    
-    device.read_until("user: ",telnet_timeout)
-    login = send_login(device, clearone_user, clearone_pass)
-    if not login:
-        retry = send_login(device, "clearone", "converge")
-        if retry:
-            return ("Login Successful, Default Credentials Used","WARNING")
-    else:
-        return ("Login Successful","OK")    
-    return("Could not Authenticate", "UNKNOWN")
+    def authenticate(self, clearone_user, clearone_pass, ):    
+        while self.device.recv(512).find('user') < 0:
+    		pass
+        login = self.send_login(clearone_user, clearone_pass)
+        if login:
+            return (True)    
+        return(False)
 
-def send_login(device, clearone_user, clearone_pass):
-    device.write(clearone_user + "\r")
-    device.read_until("pass: ",telnet_timeout)
-    device.write(clearone_pass + "\r")
-    login_response = device.expect(["Invalid", "Authenticated"],telnet_timeout)
-    found_index = login_response[0]
-    return found_index
+    def send_login(self, clearone_user, clearone_pass):
+        self.device.send(clearone_user + "\r")
+        while self.device.recv(512).find('pass') < 0:
+            pass
+        self.device.send(clearone_pass + "\r")
+        while self.device.recv(512).find('Authenticated') < 0:
+            if self.device.recv(512).find('Invalid') < 0:
+                return(False)
+            pass
+        return(True)
 
-def reset_clearone(device):
-    device.write("\r#** RESET\r")
-    login_response = None
-    login_response = device.expect(["RESET"],telnet_timeout)
-    if login_response:
-        return ("Unit Resetting", "OK")
-    return ("Reset command not succesful", "UNKNOWN")
+    def send_data(self, data):
+        try:
+            self.device.send(data)
+            return (True)
+        except Exception as e: 
+            return(False)
+        
+    def send_command(self,command):
+        if self.send_data(command):
+            return(True)
+        self.login()
+        if self.send_data(command):
+            return(True)
+        return(False)
+        
+    def rx_data(self):
+        try:
+            msg = self.device.recv(512)
+        except:
+            return(False)
+        return(msg)
+    
+    def close(self):
+        self.device.close()
