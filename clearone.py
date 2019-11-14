@@ -1,6 +1,6 @@
 import socket
 
-class clearone:
+class Clearone(object):
     def __init__(self, device):
         self.telnet_timeout = 2
         self.telnet_port = 23
@@ -8,7 +8,6 @@ class clearone:
         self.hostname = device[0]
         self.username = device[1]
         self.password = device[2]
-        self.login()
         
 
     def login(self):
@@ -22,8 +21,8 @@ class clearone:
             return ( False,"Could not Connect to Clearone")
         status = self.authenticate(self.username, self.password)
         if not status:
-            return ( False, "Could not Authenticate to Clearone")
-        return (True, "Connected and Login Succesful")
+            return (False)
+        return (True)
 
     def connect(self, clearone_ip): 
         try:
