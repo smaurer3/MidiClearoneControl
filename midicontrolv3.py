@@ -66,7 +66,8 @@ class Clearone(object):
         try:
             self.device.send(data)
             return (True)
-        except Exception as e: 
+        except Exception as e:
+            print "Failed to send data: %s - %s" % (data, e) 
             return(False)
         
     def send_command(self,command):
@@ -93,13 +94,12 @@ class MidiClearone(object):
 
         self.commands = commands
         self.gpio = gpio
+        self.momentary_button_pushed = None
+        self.encoder_changed = namedtuple("encoder_changed", "changed amount")
+        self.encoder_changed.changed = False
+        self.encoder_changed.amount = 0
         
-    def create_midi(self, status, value, param1):  
-        if param1 == '':
-            param1 = value
-        #return mido.parse([int(status), int(param1), value]) 
-
-    def clearone_rx(self, data): 
+    def clearone_rx(self, data, clearone_device): 
         def match_command(command):
             rx_to_match = rx_command.strip()
             regex = (self.commands[command]["clearone"]["set_command"] % ".*")
@@ -107,8 +107,8 @@ class MidiClearone(object):
         
         
         def process_match(command):
+            command = self.commands[command]
             clamp = lambda n: max(min(127, n), 0)
-            
             def match_gpio(index):
                 if 'param' in self.gpio[index]:
                     return (
@@ -118,14 +118,12 @@ class MidiClearone(object):
                 else:
                     return (self.gpio[index]["status"] == midi_bytes.status )
 
-            def set_gpio(gpio, value):
+            def set_gpio(gpio):
                 pin = int(self.gpio[gpio]["out_pin"])
                 if value > 0:
-                    pprint((pin, "HIGH"))
-                    #GPIO.output(int(Pins[C]['OutPin']), 1)
+                    return (pin, 1)
                 else:
-                    pprint((pin, "LOW"))
-                    #GPIO.output(int(Pins[C]['OutPin']), 0)
+                    return (pin, 0)
             
             
             def create_midi(status, value, param):         
@@ -144,6 +142,32 @@ class MidiClearone(object):
                 value = clamp(_map(value, min,max,0,127))
                 return (value)
 
+            def momentary_press():
+                self.momentary_button_pushed = False
+                value = get_value(rx_command,command)
+                print("VALUE %s" % value)
+                if value == command["clearone"]["max"]:
+                    value = command["clearone"]["min"]
+                elif value == command["clearone"]["min"]:
+                    value = command["clearone"]["max"]
+                return (command["clearone"]["set_command"] % value)
+
+            def encoder_change():
+                self.encoder_changed.changed = False
+                value = (
+                            get_value(rx_command,command) +
+                            self.encoder_changed.amount
+                        )
+                return (command["clearone"]["set_command"] % value)
+
+
+            if self.momentary_button_pushed:
+                clearone_device.send_data(momentary_press())
+                return
+            if self.encoder_changed.changed:
+                clearone_device.send_data(encoder_change())
+                return
+            
             value = midi_value(command)
             if 'param' not in command['midi']:
                 param = value    
@@ -161,24 +185,22 @@ class MidiClearone(object):
                             )
    
             gpios = filter(match_gpio, self.gpio)
-            for gpio in gpios:
-                set_gpio(gpio, value)           
-            #self.mido_out.send(midi)
-            return(midi)     
+            
+            gpio = map(set_gpio, gpios)  
+                    
+            return(midi, gpio)     
   
         rx_commands = data.split('\r')
         is_command = lambda d: '#' in d
         rx_commands = filter(is_command, rx_commands)
         
-        midi_to_return =[]
+        midi_to_return = []
         for rx_command in rx_commands:
             matched_commands = filter(match_command,self.commands)
-            for matched_command in matched_commands:
-                midi_to_return.append(
-                                process_match(self.commands[matched_command])
-                                )
-
-        return midi_to_return
+            pprint (matched_commands)
+            midi_to_return.append(map(process_match, matched_commands))
+        
+        return (midi_to_return)
             
     def midi_rx(self,data):
         midi_bytes = namedtuple("midi_bytes", "status value param")
@@ -195,7 +217,7 @@ class MidiClearone(object):
             return (midi_command["status"] == midi_bytes.status and param)
         
         def process_match(command):
-            
+            command = self.commands[command]
             def clearone_value(command):
                 min = command["clearone"]["min"]
                 max = command["clearone"]["max"]
@@ -204,18 +226,35 @@ class MidiClearone(object):
                 value = ('%f' % value).rstrip('0').rstrip('.')
                 return (value)
             
-            def clearone_command(command,value):
-                return (command["clearone"]["set_command"] % value)
-            
+            def momentary_press():
+                self.momentary_button_pushed = (midi_bytes.value == 127)
+                return (command["clearone"]["get_command"])
+
+            def encoder_change():    
+                self.encoder_changed.changed = True
+                amount = command["midi"]["step"]
+                inc = command["midi"]["inc"]
+                dec = command["midi"]["dec"]
+                step = 0
+                if midi_bytes.value == inc:
+                    step = amount
+                if midi_bytes.value == dec:
+                    step = amount * -1
+                self.encoder_changed.amount = step
+                return (command["clearone"]["get_command"])
+
+            _type = command["midi"]["type"]
+            if _type == "momentary":
+                return(momentary_press())
+
+            if _type == "incremental":
+                return(encoder_change())
+
             value = clearone_value(command)
-            return clearone_command(command,value)
+            return (command["clearone"]["set_command"] % value)
 
         matched_midis = filter(match_midi,self.commands)
-        for matched_midi in matched_midis:
-            return process_match(self.commands[matched_midi])
-        
-
-
+        return map(process_match,matched_midis)
 
 
 def main():
@@ -225,18 +264,27 @@ def main():
     commands = settings["commands"]	
     gpio = settings["gpio"]
 
+    clearone_device = Clearone(
+                                clearone_settings["hostname"],
+                                clearone_settings["user"],
+                                clearone_settings["password"]
+                            )
 
 
     mc = MidiClearone(commands,gpio)
     pprint(mc.clearone_rx("#H2 MUTE D P 0 \r"
                     "#H2 FILTER H P 2 6 20000 0 3.7 \r"
-                    " >#H2 VER 4.4.0.2 \r"
+                    " >\r#H2 VER 4.4.0.2 \r"
                     "#H2 GAIN C P 0.00 A\r"
                     "#H2 MUTE B P 0\r"
-                    "#H2 MUTE A P 1"
-                    ))
+                    "#H2 MUTE A P 1\r"
+                    ,clearone_device))
     print "MIDI RX TEST"
-    print mc.midi_rx((176,23,64))
+    clearone_commands_to_send = mc.midi_rx((144,16,127))
+    for clearone_command in clearone_commands_to_send:
+        clearone_device.send_data(clearone_command)
+
+
 #mc.clearone_rx("#H2 GAIN C P 0 A")
 
 
