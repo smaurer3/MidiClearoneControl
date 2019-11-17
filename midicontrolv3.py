@@ -5,7 +5,7 @@ import json
 from time import sleep
 import thread
 import sys
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import socket
 from collections import namedtuple
 import re
@@ -254,6 +254,26 @@ class MidiClearone(object):
 
         matched_midis = filter(match_midi,self.commands)
         return map(process_match,matched_midis)
+    
+    def gpio_rx_check(self):
+            def match_gpio(gpio_pin):
+                pin = int(gpio_pin["in_pin"])
+                return (GPIO.input(pin))
+
+            def process_match(matched_pin):
+                pin_triggered = matched_pin["in_pin"]
+                myprint("GPIO Input High on PIN: %s" % pin_triggered)
+                midi_status = matched_pin["status"]
+                if "param" in matched_pin:
+                    midi_param = matched_pin["param"]
+                else:
+                    midi_param = 127
+                midi_msg = (stats, param, 127)
+                return (midi_msg)
+                
+            
+            matched_pins = filter(match_gpio, self.gpio)
+            return map(process_match, matched_pins)
 
 verbose = False
 
@@ -263,6 +283,9 @@ midi_clearone = None
 
 def main():
     global verbose, clearone_device, midi_clearone, midi
+    
+    
+    
     print ("-"*80 + "\nMidi Clearone Controller\n" + "-"*80)
     args = get_args()
     verbose = args.verbose
@@ -290,6 +313,52 @@ def main():
                     )
 
     midi_rx((144,16,127))
+
+def gpio_rx_thread(threadname):   #thread to listen for midi messages
+		pin_status = False
+		pin_triggered = ''
+		print "GPIO Thread Started"
+		while run:   #loop while run is true
+			sleep(.05)
+			for C in Pins:
+				if GPIO.input(int(Pins[C]['InPin'])):
+					pin_triggered = C
+					
+					print "Pin Triggered: " + C
+					Status = Pins[C]['MidiStatus']
+					Param1 = Pins[C]['MidiParam1']
+					msg = [int(Status), int(Param1), 127]
+					if not pin_status:
+						processMidiRX(msg)
+					pin_status = True
+				else:
+					if pin_triggered == C:
+						pin_status = False						
+
+    def midi_rx_thread(threadname):   #thread to listen for midi messages
+          
+            print "Midi Thread Started"
+            while run:   #loop while run is true
+                
+                msg = midiIn.receive()
+                processMidiRX(msg.bytes())
+                
+    def socket_rx_thread(threadname):   #thread to listen to telnet socket messages
+            print "Telnet Thread Started"
+            while run:   #loop while run is true
+                try:
+                    msg = s.recv(512)
+                    #pMidi = False
+                    processRX(msg)
+                    #pMidi = True
+                    pass
+                except Exception as e: 
+                    print(e)
+                    
+                    s = socket.socket()
+                    connectClearone()
+                    processRX(msg)
+
 
 def midi_rx(data):
     clearone_commands_to_send = midi_clearone.midi_rx(data)
