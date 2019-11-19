@@ -64,11 +64,11 @@ class Clearone(object):
     def send_data(self, data):
         data = data.strip()
         try:
-            myprint("Sending to Clearone: '%s'\r" % data)
+            verboseprint("Sending to Clearone: '%s'\r" % data)
             self.device.send(data + '\r')
             return (True)
         except Exception as e:
-            myprint("Failed to send data: %s - %s" % (data, e))
+            verboseprint("Failed to send data: %s - %s" % (data, e))
             return(False)
         
     def send_command(self,command):
@@ -276,7 +276,7 @@ class MidiClearone(object):
 
             def process_match(matched_pin):
                 pin_triggered = matched_pin["in_pin"]
-                myprint("GPIO Input High on PIN: %s" % pin_triggered)
+                verboseprint("GPIO Input High on PIN: %s" % pin_triggered)
                 midi_status = matched_pin["status"]
                 if "param" in matched_pin:
                     midi_param = matched_pin["param"]
@@ -289,20 +289,19 @@ class MidiClearone(object):
             matched_pins = filter(match_gpio, self.gpio)
             return map(process_match, matched_pins)
 
-verbose = False
+verboseprint = lambda s: None
 
 clearone_device = None
 midi = None
 midi_clearone = None
 
 def main():
-    global verbose, clearone_device, midi_clearone, midi
-    
-    
-    
+    global verboseprint, clearone_device, midi_clearone, midi
+
     print ("-"*80 + "\nMidi Clearone Controller\n" + "-"*80)
     args = get_args()
-    verbose = args.verbose
+    if args.verbose:
+        verboseprint = lambda s: pprint(s)
     settings = load_settings(args.settings)
     clearone_settings = settings["clearone"]
     midi_settings = settings["midi_controller"]
@@ -316,60 +315,44 @@ def main():
                                 clearone_settings["user"],
                                 clearone_settings["password"]
                             )
-    myprint("Cleaone Login=%s" % clearone_device.login())
+    verboseprint("Cleaone Login=%s" % clearone_device.login())
     midi_clearone = MidiClearone(commands,gpio)
       
-    # clearone_rx("#H0 MUTE D P 0 \r"
-    #                 "#H0 FILTER H P 2 6 20000 0 3.7 \r"
-    #                 " >\r#H0 VER 4.4.0.2 \r"
-    #                 "#H0 GAIN C P 0.00 A\r"
-    #                 "#H0 MUTE B P 0\r"
-    #                 "#H0 MUTE A P 1\r"
-    #                 )
-
-    # midi_rx((224,110,110))
-    # sleep(1)
-    # clearone_rx(clearone_device.rx_data())
-    startThreads()
-
-    while True:    #Stop the clearone disconnecting the telnet session by making a request every 5 minutes.
+    start_threads()
+    while True:    
         clearone_device.send_data("#** VER")
         sleep(300)
 
-def midiRX(threadname, dat):   #thread to listen for midi messages
+def midi_thread():  
         print ("Midi Thread Started")
-        while 1:   #loop while run is true
+        while 1:   
             msg = midi.midi_in.receive()
-            midi_rx(msg.bytes())
+            midi_data_received(msg.bytes())
              
-def socketRX(threadname, dat):   #thread to listen to telnet socket messages
+def clearone_thread():  
     print ("Telnet Thread Started")
-    while 1:   #loop while run is true
+    while 1: 
         try:
             msg = clearone_device.rx_data()
-            
-            #pMidi = False
-            clearone_rx(msg)
-            #pMidi = True
-            pass
+            clearone_data_received(msg)
         except Exception as e: 
             print(e)
             clearone_device.login()
             
                 
-def startThreads(): 
-    try:					#start Threads
-        thread.start_new_thread( midiRX, ("mt",True))			
-        thread.start_new_thread( socketRX, ("tt", True))
+def start_threads(): 
+    try:					
+        thread.start_new_thread( midi_thread, ())			
+        thread.start_new_thread( clearone_thread, ())
     except:
        print "Error: unable to start threads"
 
 
-def gpio_rx_thread(threadname):   #thread to listen for midi messages
+def gpio_rx_thread(): 
         pin_status = False
         pin_triggered = ''
         print "GPIO Thread Started"
-        while run:   #loop while run is true
+        while 1:  
             sleep(.05)
             for C in Pins:
                 if GPIO.input(int(Pins[C]['InPin'])):
@@ -385,40 +368,14 @@ def gpio_rx_thread(threadname):   #thread to listen for midi messages
                 else:
                     if pin_triggered == C:
                         pin_status = False						
-'''
-def midi_rx_thread(threadname):   #thread to listen for midi messages
-        
-        print "Midi Thread Started"
-        while run:   #loop while run is true
-            
-            msg = midiIn.receive()
-            processMidiRX(msg.bytes())
-            
-def socket_rx_thread(threadname):   #thread to listen to telnet socket messages
-        print "Telnet Thread Started"
-        while run:   #loop while run is true
-            try:
-                msg = s.recv(512)
-                #pMidi = False
-                processRX(msg)
-                #pMidi = True
-                pass
-            except Exception as e: 
-                print(e)
-                
-                s = socket.socket()
-                connectClearone()
-                processRX(msg)
-
-'''
-def midi_rx(data):
-    myprint(data)
+def midi_data_received(data):
+    verboseprint(data)
     clearone_commands_to_send = midi_clearone.midi_rx(data)
     for clearone_command in clearone_commands_to_send:
-        myprint(clearone_command)
+        verboseprint(clearone_command)
         clearone_device.send_data(clearone_command)
 
-def clearone_rx(data):
+def clearone_data_received(data):
     (midi_commands, gpio_pins) = midi_clearone.clearone_rx(data)
     for midi_command in midi_commands:
         send_midi(midi_command)
@@ -429,11 +386,11 @@ def clearone_rx(data):
 
 
 def send_midi(command):
-    myprint( "SEND MIDI: %s" % command)
+    verboseprint( "SEND MIDI: %s" % command)
     midi.midi_out.send(command)
 
 def set_gpio(pin, state):
-    myprint("SET PIN %s: %s" % (pin,state))
+    verboseprint("SET PIN %s: %s" % (pin,state))
 
 def load_settings(file):  
     try:
@@ -499,11 +456,6 @@ def get_args():
         action='store_true',
         help="Enable extended output"
     )
-    return(parser.parse_args())
-
-def myprint(text):
-    if verbose:
-        print(text)
-        
+    return(parser.parse_args())   
 
 main()
