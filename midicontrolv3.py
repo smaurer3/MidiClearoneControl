@@ -79,6 +79,7 @@ class Clearone(object):
     def rx_data(self):
         try:
             msg = self.device.recv(512)
+            verboseprint("RAW Data Received: %s" % msg)
         except:
             return(False)
         return(msg)
@@ -86,7 +87,7 @@ class Clearone(object):
     def close(self):
         self.device.close()
 
-class Midi(Object):
+class Midi(object):
     def __init__(self,in_port, out_port):
         try:
             self.midi_in = mido.open_input(in_port)
@@ -172,7 +173,7 @@ class MidiClearone(object):
                 return (value)
 
             def momentary_press():
-                momentary_button_pushed = False
+                self.momentary_button_pushed = False
                 value = get_value(rx_command)
                 if value == command["clearone"]["max"]:
                     value = command["clearone"]["min"]
@@ -181,7 +182,7 @@ class MidiClearone(object):
                 return (command["clearone"]["set_command"] % value)
 
             def encoder_change():
-                encoder_changed.changed = False
+                self.encoder_changed.changed = False
                 value = (
                             get_value(rx_command) +
                             self.encoder_changed.amount
@@ -292,26 +293,6 @@ class MidiClearone(object):
         matched_midis = filter(match_midi,self.commands)
         return map(process_match,matched_midis)
     
-    def gpio_status_check(self):
-            def match_gpio(gpio_pin):
-                pin = int(gpio_pin["in_pin"])
-                return (GPIO.input(pin))
-
-            def process_match(matched_pin):
-                pin_triggered = matched_pin["in_pin"]
-                verboseprint("GPIO Input High on PIN: %s" % pin_triggered)
-                midi_status = matched_pin["status"]
-                if "param" in matched_pin:
-                    midi_param = matched_pin["param"]
-                else:
-                    midi_param = 127
-                midi_msg = (stats, param, 127)
-                return (midi_msg)
-                
-            
-            matched_pins = filter(match_gpio, self.gpio)
-            return map(process_match, matched_pins)
-    
     def midi_thread(self):  
             while self.run_thread:   
                 msg = self.midi.midi_in.receive()
@@ -325,7 +306,28 @@ class MidiClearone(object):
             except Exception as e: 
                 print(e)
                 self.clearone_device.login()
-                    
+    
+    def gpio_rx_thread(self): 
+            pin_status = False
+            pin_triggered = ''
+            print "GPIO Thread Started"
+            while self.run_thread:  
+                sleep(.05)
+                for pin in self.gpio:
+                    if GPIO.input(int(self.gpio[pin]['InPin'])):
+                        pin_triggered = pin
+                        
+                        print "Pin Triggered: " + pin
+                        Status = self.gpio[pin]['MidiStatus']
+                        Param1 = self.gpio[pin]['MidiParam1']
+                        msg = [int(Status), int(Param1), 127]
+                        if not pin_status:
+                            self.clearone_to_midi_gpio(msg)
+                        pin_status = True
+                    else:
+                        if pin_triggered == pin:
+                            pin_status = False	
+                        
     def start_threads(self): 
         try:				
             self.run_thread = True	
@@ -334,36 +336,15 @@ class MidiClearone(object):
         except:
             raise Exception("Unable to start Threads")
         
-        while True:    
-            self.clearone_device.send_data("#** VER")
+        while self.run_thread:    
             sleep(300)
-
-    def gpio_rx_thread(self): 
-            pin_status = False
-            pin_triggered = ''
-            print "GPIO Thread Started"
-            while 1:  
-                sleep(.05)
-                for C in Pins:
-                    if GPIO.input(int(Pins[C]['InPin'])):
-                        pin_triggered = C
-                        
-                        print "Pin Triggered: " + C
-                        Status = Pins[C]['MidiStatus']
-                        Param1 = Pins[C]['MidiParam1']
-                        msg = [int(Status), int(Param1), 127]
-                        if not pin_status:
-                            processMidiRX(msg)
-                        pin_status = True
-                    else:
-                        if pin_triggered == C:
-                            pin_status = False	
+            self.clearone_device.send_data("#** VER")
                                                 
     def midi_data_received(self,data):
         verboseprint("Data Received from Midi Device: %s" % data)
         clearone_commands_to_send = self.midi_to_clearone(data)
         for clearone_command in clearone_commands_to_send:
-            verboseprint(clearone_command)
+            verboseprint("Sending Command to Clearone: %s" % clearone_command)
             self.clearone_device.send_data(clearone_command)
 
     def clearone_data_received(self,data):
@@ -380,16 +361,18 @@ class MidiClearone(object):
 
     def send_defaults_to_clearone(self):
         for command in self.commands:
+            clearone_command = self.commands[command]["clearone"]
             self.clearone_device.send_command(
-                                command["set_command"] % command["default"]
+                                clearone_command["set_command"] % clearone_command["default"]
                                 )
             msg = self.clearone_device.rx_data()
             self.clearone_data_received(msg)
     
     def get_clearone_status(self):
         for command in self.commands:
+            clearone_command = self.commands[command]["clearone"]
             self.clearone_device.send_command(
-                                command["get_command"]
+                                clearone_command["get_command"]
                                 )
             msg = self.clearone_device.rx_data()
             self.clearone_data_received(msg)
@@ -406,16 +389,21 @@ def main():
         
     print (" "*40 + "\nLoading Settings...\n")
     settings = load_settings(args.settings)
-    print (" "*40 + "\Connecting to Clearone and Midi Controller Devices...\n")
+    
+    print (" "*40 + "\nConnecting to Clearone and Midi Controller Devices...\n")
     midi_clearone = MidiClearone(settings)
+    
     if args.defaults:
-        print (" "*40 + "\Sending Default Values to Clearone...\n")
+        print (" "*40 + "\nSending Default Values to Clearone...\n")
         midi_clearone.send_defaults_to_clearone()
     else:
-        print (" "*40 + "\Getting Clearone Status...\n")
+        print (" "*40 + "\nGetting Clearone Status...\n")
         midi_clearone.get_clearone_status()
-    print (" "*40 + "\Starting Midi, Clearone and Keep Alive Threads...\n")  
+    
+    print (" "*40 + "\nStarting Midi, Clearone and Keep Alive Threads...\n")  
     midi_clearone.start_threads()
+    midi_clearone.clearone_device.close()
+
 
 def load_settings(file):  
     try:
@@ -435,10 +423,10 @@ def _map(value, leftMin, leftMax, rightMin, rightMax):
     return rightMin + (valueScaled * rightSpan)
 
 def gpio_setup(gpio):
-    for C in gpio:
-        GPIO.setup(int(gpio[C]['in_pin']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)	
-        GPIO.setup(int(gpio[C]['out_pin']), GPIO.OUT)	
-        GPIO.output(int(gpio[C]['out_pin']), 1)
+    for command in gpio:
+        GPIO.setup(int(gpio[command]['in_pin']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)	
+        GPIO.setup(int(gpio[command]['out_pin']), GPIO.OUT)	
+        GPIO.output(int(gpio[command]['out_pin']), 1)
 
 def get_args():
     parser = argparse.ArgumentParser(
