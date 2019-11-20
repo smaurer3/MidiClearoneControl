@@ -264,8 +264,9 @@ class MidiClearone(object):
                 return (value)
             
             def momentary_press():
-                self.momentary_button_pushed = (midi_bytes.value == 127)
-                return (command["clearone"]["get_command"])
+                if midi_bytes.value == 127:
+                    self.momentary_button_pushed = True
+                    return (command["clearone"]["get_command"])
 
             def encoder_change():    
                 self.encoder_changed.changed = True
