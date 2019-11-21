@@ -28,17 +28,27 @@ class Clearone(object):
             self.device = None
         except:
             pass
-        self.connect(self.hostname)
+        retry_delay = 10
+        
+        while not self.connect(self.hostname):
+            print("No response from Clearone, waiting %s to retry" % retry_delay)
+            sleep(retry_delay)    
+            retry_delay += 1
+            if retry_delay > 20:
+                raise Exception("Could Not Connnect To Clearone")
+
         status = self.authenticate(self.username, self.password)
         if not status:
             raise Exception("Could not authenticate Clearone")
 
     def connect(self, clearone_ip): 
-        try:
-            self.device = socket.socket()
-            self.device.connect((clearone_ip, self.telnet_port))
-        except Exception as e: 
-           raise Exception("Could not connecte to clearone")
+        while True:
+            try:
+                self.device = socket.socket()
+                self.device.connect((clearone_ip, self.telnet_port))
+                return True
+            except: 
+                return False
     
 
     def authenticate(self, clearone_user, clearone_pass, ):    
@@ -131,6 +141,21 @@ class MidiClearone(object):
                                     self.clearone_settings["password"]
                                 )
         
+    def wait_for_all_devices(self):
+        device_list = self.clearone_settings["devices"]
+        device_list_count = len(device_list)
+        while device_list_count > 0:
+            device_list_count = len(device_list)
+            sleep(1)
+            self.clearone_device.send_command("#** DID")
+            response = self.clearone_device.rx_data()
+            responses = response.split()
+            devices = filter(lambda r: "#" in r, responses)
+            for device in device_list:
+                if any(device in s for s in devices):
+                    
+                    device_list_count -= 1   
+
     def clearone_to_midi_gpio(self, data): 
         def match_command(command):       
             rx_to_match = rx_command.strip()
@@ -224,9 +249,7 @@ class MidiClearone(object):
                     }
             return(obj)     
   
-        rx_commands = re.split("\r|OK>", data)
-        pprint(rx_commands)
-        
+        rx_commands = re.split("\r|OK>", data)   
         is_command = lambda d: '#' in d
         rx_commands = filter(is_command, rx_commands)
         
@@ -405,6 +428,10 @@ def main():
     print (" "*40 + "\nConnecting to Clearone and Midi Controller Devices...\n")
     midi_clearone = MidiClearone(settings)
     
+    if args.wait_devices:
+        print ("Waiting for all Devices to connect")
+        midi_clearone.wait_for_all_devices()
+        print("All Devices Present")
     if args.defaults:
         print (" "*40 + "\nSending Default Values to Clearone...\n")
         midi_clearone.send_defaults_to_clearone()
@@ -465,6 +492,13 @@ def get_args():
         "--defaults",
         action='store_true',
         help="Send default values to clearone on startup"
+    )
+    
+    parser.add_argument(
+        "-w",
+        "--wait_devices",
+        action='store_true',
+        help="Wait for devices specified in settings to be present on startup"
     )
     return(parser.parse_args())   
 
