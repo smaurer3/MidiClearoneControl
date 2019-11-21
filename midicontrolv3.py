@@ -5,16 +5,16 @@ import json
 from time import sleep
 import thread
 import sys
-#import RPi.GPIO as GPIO
 import socket
 from collections import namedtuple
 import re
 from pprint import pprint
-
-#Clearone:   Handles communications to Clearone DSPs
+try:
+    import RPi.GPIO as GPIO    
+except ImportError:
+    pass
 class Clearone(object):
     def __init__(self, hostname, username, password):
-        self.telnet_timeout = 2
         self.telnet_port = 23
         self.device = None
         self.hostname = hostname
@@ -103,23 +103,27 @@ class Midi(object):
             self.midi_in = mido.open_input(in_port)
             self.midi_out = mido.open_output(out_port)
         except:
-            self.list_midi_ports()
+            print(self.list_midi_ports())              
             raise Exception("Unable to Open Midi Ports.")
 
+
     def list_midi_ports(self):
-            print ("Invalid Midi Port\n" + "-"*40 + "\n\nAvailable Input Ports:\n")
+            port_msg = ("Invalid Midi Port\n" + "-"*40 + "\n\nAvailable Input Ports:\n")
+            first_in_port = None
             for p in mido.get_input_names():
-                print p
-            print ("\n" + "-"*40 + "\nAvailable Output Ports:\n")
+                port_msg += p
+            port_msg += ("\n" + "-"*40 + "\nAvailable Output Ports:\n")
+            first_out_port = None
             for p in mido.get_output_names():
-                print p
-            print (
+                port_msg += p
+            port_msg += (
                     "\n" + "-"*40 + "\nEnsure midi device is connected\n"
                     "\nChange midi ports in  settings.py\n"
                 )
+            return(port_msg)
             
 class MidiClearone(object):
-    def __init__(self, settings):
+    def __init__(self, settings, enable_gpio, auto_port):
         self.commands = settings["commands"]
         self.gpio = settings["gpio"]
         self.momentary_button_pushed = None
@@ -129,7 +133,11 @@ class MidiClearone(object):
         self.clearone_settings = settings["clearone"]
         self.midi_settings = settings["midi_controller"]
         self.run_thread = False
-        
+        self.gpio_enabled = enable_gpio
+        if auto_port:
+            (in_port, out_port) = self.get_midi_ports()
+            self.midi_settings["in_port"] = in_port
+            self.midi_settings["out_port"] = out_port
         self.midi = Midi(
                             self.midi_settings["in_port"], 
                             self.midi_settings["out_port"]
@@ -141,6 +149,14 @@ class MidiClearone(object):
                                     self.clearone_settings["password"]
                                 )
         
+    def get_midi_port(self):
+        in_ports = mido.get_input_names()
+        out_ports = mido.get_input_names()
+        try:
+            return(in_ports[0], out_ports[0])
+        except Exception as e:
+            raise Exception("Could not get Midi Ports, %s" % e)
+              
     def wait_for_all_devices(self):
         device_list = self.clearone_settings["devices"]
         device_list_count = len(device_list)
@@ -153,7 +169,6 @@ class MidiClearone(object):
             devices = filter(lambda r: "#" in r, responses)
             for device in device_list:
                 if any(device in s for s in devices):
-                    
                     device_list_count -= 1   
 
     def clearone_to_midi_gpio(self, data): 
@@ -339,31 +354,33 @@ class MidiClearone(object):
                 self.clearone_device.login()
     
     def gpio_rx_thread(self): 
-            pin_status = False
+            midi_msg_sent = False
             pin_triggered = ''
-            print "GPIO Thread Started"
             while self.run_thread:  
                 sleep(.05)
                 for pin in self.gpio:
                     if GPIO.input(int(self.gpio[pin]['InPin'])):
                         pin_triggered = pin
-                        
-                        print "Pin Triggered: " + pin
-                        Status = self.gpio[pin]['MidiStatus']
-                        Param1 = self.gpio[pin]['MidiParam1']
-                        msg = [int(Status), int(Param1), 127]
-                        if not pin_status:
-                            self.clearone_to_midi_gpio(msg)
-                        pin_status = True
+                        status = self.gpio[pin]['status']
+                        if "param " in self.gpio[pin]:
+                            param = self.gpio[pin]['param']
+                        else:
+                            param = 127
+                        msg = [int(status), int(param), 127]
+                        if not midi_msg_sent:
+                            self.midi_data_received(msg)
+                        midi_msg_sent = True
                     else:
                         if pin_triggered == pin:
-                            pin_status = False	
+                            midi_msg_sent = False	
                         
     def start_threads(self): 
         try:				
             self.run_thread = True	
             thread.start_new_thread( self.midi_thread, ())			
             thread.start_new_thread( self.clearone_thread, ())
+            if self.gpio_enabled:
+                thread.start_new_thread( self.gpio_rx_thread, ())
         except:
             raise Exception("Unable to start Threads")
         
@@ -376,7 +393,8 @@ class MidiClearone(object):
         clearone_commands_to_send = self.midi_to_clearone(data)
         for clearone_command in clearone_commands_to_send:
             if clearone_command:
-                verboseprint("Sending Command to Clearone: %s" % clearone_command)
+                verboseprint("Sending Command to Clearone: %s" 
+                             % clearone_command)
                 self.clearone_device.send_data(clearone_command)
 
     def clearone_data_received(self,data):
@@ -385,20 +403,25 @@ class MidiClearone(object):
             if midi_command:
                 verboseprint("Sending MIDI: %s" % midi_command)
                 self.midi.midi_out.send(midi_command)
+        if self.gpio_enabled:
+            self.gpio_received(gpio_pins)
+
+    def gpio_received(self,gpio_pins):
         for gpio_pin in gpio_pins:
             if gpio_pin:
                 for indivdual_commands in gpio_pin:
                     self.set_gpio(indivdual_commands[0], indivdual_commands[1])
-
-
+    
     def set_gpio(self,pin, state):
         verboseprint("SET PIN %s: %s" % (pin,state))
+        GPIO.output(pin, state)
 
     def send_defaults_to_clearone(self):
         for command in self.commands:
             clearone_command = self.commands[command]["clearone"]
             self.clearone_device.send_command(
-                                clearone_command["set_command"] % clearone_command["default"]
+                                clearone_command["set_command"]
+                                % clearone_command["default"]
                                 )
             msg = self.clearone_device.rx_data()
             self.clearone_data_received(msg)
@@ -426,7 +449,7 @@ def main():
     settings = load_settings(args.settings)
     
     print (" "*40 + "\nConnecting to Clearone and Midi Controller Devices...\n")
-    midi_clearone = MidiClearone(settings)
+    midi_clearone = MidiClearone(settings, args.gpio, args.auto_midi)
     
     if args.wait_devices:
         print ("Waiting for all Devices to connect")
@@ -500,6 +523,21 @@ def get_args():
         action='store_true',
         help="Wait for devices specified in settings to be present on startup"
     )
-    return(parser.parse_args())   
+    return(parser.parse_args())
+    
+    parser.add_argument(
+        "-g",
+        "--gpio",
+        action='store_true',
+        help="Enable Raspberry Pi GPIO, RPi.GPIO library mus be installed."
+    )
+    
+    parser.add_argument(
+        "-a",
+        "--auto_midi",
+        action='store_true',
+        help="Autmatically use first Midi In and Out ports on system."
+    )
+    return(parser.parse_args())
 
 main()
