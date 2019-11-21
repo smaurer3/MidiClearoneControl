@@ -132,7 +132,7 @@ class MidiClearone(object):
                                 )
         
     def clearone_to_midi_gpio(self, data): 
-        def match_command(command):
+        def match_command(command):       
             rx_to_match = rx_command.strip()
             regex = (self.commands[command]["clearone"]["set_command"] % ".*")
             return re.match(regex,rx_to_match)
@@ -165,6 +165,7 @@ class MidiClearone(object):
                 clearone_rx = clearone_rx.split()
                 value_index = set_command.index("%s")
                 return float(clearone_rx[value_index])     
+            
             def midi_value():
                 min = command["clearone"]["min"]
                 max = command["clearone"]["max"]
@@ -183,18 +184,20 @@ class MidiClearone(object):
 
             def encoder_change():
                 self.encoder_changed.changed = False
+                print(get_value(rx_command))
                 value = (
                             get_value(rx_command) +
                             self.encoder_changed.amount
                         )
                 return (command["clearone"]["set_command"] % value)
-
+            
             if self.momentary_button_pushed:
                 self.clearone_device.send_data(momentary_press())
-                return
+                #return 
             if self.encoder_changed.changed:
+                
                 self.clearone_device.send_data(encoder_change())
-                return
+                #return
             
             value = midi_value()
             if 'param' not in command['midi']:
@@ -221,7 +224,9 @@ class MidiClearone(object):
                     }
             return(obj)     
   
-        rx_commands = data.split('\r')
+        rx_commands = re.split("\r|OK>", data)
+        pprint(rx_commands)
+        
         is_command = lambda d: '#' in d
         rx_commands = filter(is_command, rx_commands)
         
@@ -270,13 +275,15 @@ class MidiClearone(object):
 
             def encoder_change():    
                 self.encoder_changed.changed = True
-                amount = command["midi"]["step"]
-                inc = command["midi"]["inc"]
-                dec = command["midi"]["dec"]
+                amount = command["clearone"]["step"]
+                inc = command["clearone"]["inc"]
+                dec = command["clearone"]["dec"]
                 step = 0
                 if midi_bytes.value == inc:
+                    print "INC"
                     step = amount
                 if midi_bytes.value == dec:
+                    print "DEC"
                     step = amount * -1
                 self.encoder_changed.amount = step
                 return (command["clearone"]["get_command"])
@@ -305,7 +312,7 @@ class MidiClearone(object):
                 msg = self.clearone_device.rx_data()
                 self.clearone_data_received(msg)
             except Exception as e: 
-                print(e)
+                print("Clearone Thread Error: %s" % e)
                 self.clearone_device.login()
     
     def gpio_rx_thread(self): 
@@ -345,16 +352,20 @@ class MidiClearone(object):
         verboseprint("Data Received from Midi Device: %s" % data)
         clearone_commands_to_send = self.midi_to_clearone(data)
         for clearone_command in clearone_commands_to_send:
-            verboseprint("Sending Command to Clearone: %s" % clearone_command)
-            self.clearone_device.send_data(clearone_command)
+            if clearone_command:
+                verboseprint("Sending Command to Clearone: %s" % clearone_command)
+                self.clearone_device.send_data(clearone_command)
 
     def clearone_data_received(self,data):
         (midi_commands, gpio_pins) = self.clearone_to_midi_gpio(data)
         for midi_command in midi_commands:
-            self.midi.midi_out.send(midi_command)
+            if midi_command:
+                verboseprint("Sending MIDI: %s" % midi_command)
+                self.midi.midi_out.send(midi_command)
         for gpio_pin in gpio_pins:
-            for indivdual_commands in gpio_pin:
-                self.set_gpio(indivdual_commands[0], indivdual_commands[1])
+            if gpio_pin:
+                for indivdual_commands in gpio_pin:
+                    self.set_gpio(indivdual_commands[0], indivdual_commands[1])
 
 
     def set_gpio(self,pin, state):
