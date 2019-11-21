@@ -88,8 +88,8 @@
         },
         "_6" : {
             "clearone": {
-                "set_command" : "#G1 GAIN 1 F %s A",
-                "get_command" : "#G1 GAIN 1 F",
+                "set_command" : "#H0 GAIN A P %s A",
+                "get_command" : "#H0 GAIN A P",
                 "max" : 10,
                 "min" : -35,
                 "default" : 0
@@ -124,7 +124,7 @@
                 "default" : 0
             },
             "midi" : {
-                "type" : "absolute",
+                "type" : "momentary",
                 "status" : 176,
                 "param" : 73
             } 
@@ -138,7 +138,7 @@
                 "default" : 0
             },
             "midi" : {
-                "type" : "absolute",
+                "type" : "momentary",
                 "status" : 176,
                 "param" : 74
             } 
@@ -152,7 +152,7 @@
                 "default" : 0
             },
             "midi" : {
-                "type" : "absolute",
+                "type" : "momentary",
                 "status" : 176,
                 "param" : 75
             } 
@@ -166,7 +166,7 @@
                 "default" : 1
             },
             "midi" : {
-                "type" : "absolute",
+                "type" : "momentary",
                 "status" : 176,
                 "param" : 76
             } 
@@ -180,21 +180,21 @@
                 "default" : 1
             },
             "midi" : {
-                "type" : "absolute",
+                "type" : "momentary",
                 "status" : 176,
                 "param" : 77
             } 
         },
         "_15" : {
             "clearone": {
-                "set_command" : "#H0 MUTE 1 F %s",
-                "get_command" : "#H0 MUTE 1 F",
+                "set_command" : "#H0 MUTE A P %s",
+                "get_command" : "#H0 MUTE A P",
                 "max" : 1,
                 "min" : 0,
                 "default" : 1
             },
             "midi" : {
-                "type" : "absolute",        
+                "type" : "momentary",        
                 "status" : 176,
                 "param" : 78
             } 
