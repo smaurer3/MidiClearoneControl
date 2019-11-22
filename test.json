@@ -4,7 +4,7 @@
         "user" : "clearone",
         "password" : "converge",
         "hostname" : "192.168.1.185" ,
-        "startup_commands" : ["#H2 FEDR J 2","#H2 FEDR J 4"]
+        "startup_commands" : ["#H2 FEDR 2 J","#H2 FEDR 4 J"]
     }, 
 
     "midi_controller" : {
