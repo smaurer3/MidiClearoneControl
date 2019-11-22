@@ -194,9 +194,9 @@ class MidiClearone(object):
             command = self.commands[command]
             clamp = lambda n: max(min(127, n), 0)
             def match_gpio(index):
-                if 'param' in self.gpio[index]:
+                if 'data' in self.gpio[index]:
                     return (
-                            self.gpio[index]["param"] == midi_bytes.param and
+                            self.gpio[index]["data"] == midi_bytes.data and
                             self.gpio[index]["status"] == midi_bytes.status 
                         )
                 else:
@@ -209,8 +209,8 @@ class MidiClearone(object):
                 else:
                     return (pin, 0)
                       
-            def create_midi(status, value, param):         
-                msg = mido.parse([status, param, value]) 
+            def create_midi(status, value, data):         
+                msg = mido.parse([status, data, value]) 
                 return msg
                 
             def get_value(clearone_rx):
@@ -253,19 +253,19 @@ class MidiClearone(object):
                 #return
             
             value = midi_value()
-            if 'param' not in command['midi']:
-                param = value    
+            if 'data' not in command['midi']:
+                data = value    
             else:
-                param = command["midi"]['param']
+                data = command["midi"]['data']
             
-            midi_bytes = namedtuple("midi_bytes", "status value param")
+            midi_bytes = namedtuple("midi_bytes", "status value data")
             midi_bytes.status = int(command["midi"]['status'])
             midi_bytes.value = int(value + .5)
-            midi_bytes.param = int(param + .5)
+            midi_bytes.data = int(data + .5)
             midi = create_midi(
                                 midi_bytes.status, 
                                 midi_bytes.value, 
-                                midi_bytes.param
+                                midi_bytes.data
                             )
    
             gpios = filter(match_gpio, self.gpio)
@@ -296,18 +296,18 @@ class MidiClearone(object):
         return (midi_to_return, gpio_to_return)
             
     def midi_to_clearone(self,data):
-        midi_bytes = namedtuple("midi_bytes", "status value param")
+        midi_bytes = namedtuple("midi_bytes", "status value data")
         midi_bytes.status = data[0]
         midi_bytes.value = data[2]
-        midi_bytes.param = data[1]
+        midi_bytes.data = data[1]
         
         def match_midi(command):
             midi_command = self.commands[command]["midi"]
-            if "param" in midi_command:
-                param = midi_bytes.param == midi_command["param"]
+            if "data" in midi_command:
+                data = midi_bytes.data == midi_command["data"]
             else:
-                param = True
-            return (midi_command["status"] == midi_bytes.status and param)
+                data = True
+            return (midi_command["status"] == midi_bytes.status and data)
         
         def process_match(command):
             command = self.commands[command]
@@ -375,11 +375,11 @@ class MidiClearone(object):
                     if GPIO.input(int(self.gpio[pin]['InPin'])):
                         pin_triggered = pin
                         status = self.gpio[pin]['status']
-                        if "param " in self.gpio[pin]:
-                            param = self.gpio[pin]['param']
+                        if "data " in self.gpio[pin]:
+                            data = self.gpio[pin]['data']
                         else:
-                            param = 127
-                        msg = [int(status), int(param), 127]
+                            data = 127
+                        msg = [int(status), int(data), 127]
                         if not midi_msg_sent:
                             self.midi_data_received(msg)
                         midi_msg_sent = True
@@ -462,13 +462,13 @@ def main():
     settings = load_settings(args.settings)
     
     print (" "*40 + "\nConnecting to Clearone and Midi Controller Devices...\n")
-    midi_clearone = MidiClearone(settings, args.gpio, args.auto_midi)
+    midi_clearone = MidiClearone(settings, args.gpio, args.auto)
     
-    if args.wait_devices:
+    if args.wait:
         print ("Waiting for all Devices to connect")
         midi_clearone.wait_for_all_devices()
         print("All Devices Present")
-    if args.startup_commands:
+    if args.startup:
         print("Running Startup Commands")
         midi_clearone.run_startup_commands()    
     
