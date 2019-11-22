@@ -117,7 +117,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 144,
-                "param" : 16
+                "data" : 16
             } 
         },
         "_11" : {
@@ -131,7 +131,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 144,
-                "param" : 17
+                "data" : 17
             } 
         },
         "_12" : {
@@ -145,7 +145,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 144,
-                "param" : 18
+                "data" : 18
             } 
         },
         "_13" : {
@@ -159,7 +159,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 144,
-                "param" : 19
+                "data" : 19
             } 
         },
         "_14" : {
@@ -173,7 +173,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 144,
-                "param" : 20
+                "data" : 20
             } 
         },
         "_15" : {
@@ -187,7 +187,7 @@
             "midi" : {
                 "type" : "momentary",        
                 "status" : 144,
-                "param" : 21
+                "data" : 21
             } 
         },
     
@@ -205,7 +205,7 @@
             "midi" : {
                 "type" : "incremental",
                 "status" : 176,
-                "param" : 22
+                "data" : 22
             } 
         },
         "_17" : {
@@ -222,7 +222,7 @@
             "midi" : {
                 "type" : "incremental",
                 "status" : 176,
-                "param" : 23
+                "data" : 23
             } 
         }
     }, 
@@ -231,13 +231,13 @@
             "in_pin" : 31,
             "out_pin" : 35,
             "status" : 144,
-            "param"  : 16
+            "data"  : 16
         },
         "_2" : {
             "in_pin" : 33,
             "out_pin" : 37,
             "status" : 144,
-            "param"  : 18
+            "data"  : 18
         }
     }  
 }

@@ -26,7 +26,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 81
+                "data" : 81
             } 
         },
         "_2" : {
@@ -40,7 +40,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 82
+                "data" : 82
             } 
         },
         "_3" : {
@@ -54,7 +54,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 83
+                "data" : 83
             } 
         },
         "_4" : {
@@ -68,7 +68,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 84
+                "data" : 84
             } 
         },
         "_5" : {
@@ -82,7 +82,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 85
+                "data" : 85
             } 
         },
         "_6" : {
@@ -96,7 +96,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 86
+                "data" : 86
             } 
         },
         "_9" : {
@@ -110,7 +110,7 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 176,
-                "param" : 88
+                "data" : 88
             } 
         },
     
@@ -125,7 +125,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 176,
-                "param" : 73
+                "data" : 73
             } 
         },
         "_11" : {
@@ -139,7 +139,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 176,
-                "param" : 74
+                "data" : 74
             } 
         },
         "_12" : {
@@ -153,7 +153,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 176,
-                "param" : 75
+                "data" : 75
             } 
         },
         "_13" : {
@@ -167,7 +167,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 176,
-                "param" : 76
+                "data" : 76
             } 
         },
         "_14" : {
@@ -181,7 +181,7 @@
             "midi" : {
                 "type" : "momentary",
                 "status" : 176,
-                "param" : 77
+                "data" : 77
             } 
         },
         "_15" : {
@@ -195,7 +195,7 @@
             "midi" : {
                 "type" : "momentary",        
                 "status" : 176,
-                "param" : 78
+                "data" : 78
             } 
         },
     
@@ -213,7 +213,7 @@
             "midi" : {
                 "type" : "incremental",
                 "status" : 176,
-                "param" : 22
+                "data" : 22
             } 
         },
         "_17" : {
@@ -230,7 +230,7 @@
             "midi" : {
                 "type" : "incremental",
                 "status" : 176,
-                "param" : 23
+                "data" : 23
             } 
         }
     }, 
@@ -241,13 +241,13 @@
             "in_pin" : 31,
             "out_pin" : 35,
             "status" : 144,
-            "param"  : 16
+            "data"  : 16
         },
         "_2" : {
             "in_pin" : 33,
             "out_pin" : 37,
             "status" : 144,
-            "param"  : 17
+            "data"  : 17
         }
     }  
 }
