@@ -3,9 +3,9 @@
         "devices" : ["H2", "G1"],
         "user" : "clearone",
         "password" : "converge",
-        "hostname" : "192.168.1.102" 
+        "hostname" : "192.168.1.102",
+        "startup_commands" : ["#H2 FEDR J 2","#H2 FEDR J 4"]
     }, 
-
 
     "midi_controller" : {
         "in_port" : 
@@ -105,8 +105,7 @@
                 "type" : "absolute",
                 "status" : 232
             } 
-        },
-    
+        },  
         "_10" : {
             "clearone": {
                 "set_command" : "#H2 MUTE A P %s",
@@ -227,8 +226,6 @@
             } 
         }
     }, 
-
-
     "gpio" : {
         "_1" : {
             "in_pin" : 31,

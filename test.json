@@ -3,9 +3,9 @@
         "devices" : ["H2"],
         "user" : "clearone",
         "password" : "converge",
-        "hostname" : "192.168.1.185" 
+        "hostname" : "192.168.1.185" ,
+        "startup_commands" : ["#H2 FEDR J 2","#H2 FEDR J 4"]
     }, 
-
 
     "midi_controller" : {
         "in_port" : 

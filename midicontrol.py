@@ -103,8 +103,8 @@ class Midi(object):
             self.midi_in = mido.open_input(in_port)
             self.midi_out = mido.open_output(out_port)
         except:
-            print(self.list_midi_ports())              
-            raise Exception("Unable to Open Midi Ports.")
+            print(self.list_midi_ports())
+            sys.exit(2)            
 
 
     def list_midi_ports(self):
@@ -118,7 +118,9 @@ class Midi(object):
                 port_msg += p
             port_msg += (
                     "\n" + "-"*40 + "\nEnsure midi device is connected\n"
-                    "\nChange midi ports in  settings.py\n"
+                    "\nChange midi ports in  settings.py\n\n"
+                    "Alternatively, the:  -a, --auto_midi arguments can be used"
+                    "\nto automatically use first Midi In and Out ports on system.\n"
                 )
             return(port_msg)
             
@@ -126,18 +128,23 @@ class MidiClearone(object):
     def __init__(self, settings, enable_gpio, auto_port):
         self.commands = settings["commands"]
         self.gpio = settings["gpio"]
+        self.clearone_settings = settings["clearone"]
+        self.midi_settings = settings["midi_controller"]
         self.momentary_button_pushed = None
         self.encoder_changed = namedtuple("encoder_changed", "changed amount")
         self.encoder_changed.changed = False
         self.encoder_changed.amount = 0
-        self.clearone_settings = settings["clearone"]
-        self.midi_settings = settings["midi_controller"]
         self.run_thread = False
         self.gpio_enabled = enable_gpio
         if auto_port:
             (in_port, out_port) = self.get_midi_ports()
             self.midi_settings["in_port"] = in_port
             self.midi_settings["out_port"] = out_port
+        print("Midi In Port: %s\nMidi Out Port: %s\n" % (
+            self.midi_settings["in_port"],
+            self.midi_settings["out_port"]
+            )
+        )
         self.midi = Midi(
                             self.midi_settings["in_port"], 
                             self.midi_settings["out_port"]
@@ -149,7 +156,8 @@ class MidiClearone(object):
                                     self.clearone_settings["password"]
                                 )
         
-    def get_midi_port(self):
+    def get_midi_ports(self):
+        print("Auto selecting Midi Ports...\n")
         in_ports = mido.get_input_names()
         out_ports = mido.get_input_names()
         try:
@@ -169,7 +177,12 @@ class MidiClearone(object):
             devices = filter(lambda r: "#" in r, responses)
             for device in device_list:
                 if any(device in s for s in devices):
-                    device_list_count -= 1   
+                    device_list_count -= 1 
+
+    def run_startup_commands(self):
+        startup_commands = self.clearone_settings["startup_commands"]
+        for command in startup_commands:
+             self.clearone_device.send_command(command)
 
     def clearone_to_midi_gpio(self, data): 
         def match_command(command):       
@@ -455,6 +468,10 @@ def main():
         print ("Waiting for all Devices to connect")
         midi_clearone.wait_for_all_devices()
         print("All Devices Present")
+    if args.startup_commands:
+        print("Running Startup Commands")
+        midi_clearone.run_startup_commands()    
+    
     if args.defaults:
         print (" "*40 + "\nSending Default Values to Clearone...\n")
         midi_clearone.send_defaults_to_clearone()
@@ -519,11 +536,10 @@ def get_args():
     
     parser.add_argument(
         "-w",
-        "--wait_devices",
+        "--wait",
         action='store_true',
         help="Wait for devices specified in settings to be present on startup"
     )
-    return(parser.parse_args())
     
     parser.add_argument(
         "-g",
@@ -534,9 +550,16 @@ def get_args():
     
     parser.add_argument(
         "-a",
-        "--auto_midi",
+        "--auto",
         action='store_true',
-        help="Autmatically use first Midi In and Out ports on system."
+        help="Automatically use first Midi In and Out ports on system."
+    )
+
+    parser.add_argument(
+        "-S",
+        "--startup",
+        action='store_true',
+        help="Run startup commands after connection to Clearone"
     )
     return(parser.parse_args())
 
