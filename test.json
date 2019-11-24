@@ -240,14 +240,14 @@
         "_1" : {
             "in_pin" : 31,
             "out_pin" : 35,
-            "status" : 144,
-            "data"  : 16
+            "status" : 176,
+            "data"  : 73
         },
         "_2" : {
             "in_pin" : 33,
             "out_pin" : 37,
-            "status" : 144,
-            "data"  : 17
+            "status" : 176,
+            "data"  : 74
         }
     }  
 }
