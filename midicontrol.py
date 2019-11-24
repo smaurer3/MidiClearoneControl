@@ -441,6 +441,7 @@ class MidiClearone(object):
             self.clearone_data_received(msg)
     
     def gpio_setup(self,gpio):
+        print ("Setting up GPIO")
         for command in gpio:
             GPIO.setup(int(gpio[command]['in_pin']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)	
             GPIO.setup(int(gpio[command]['out_pin']), GPIO.OUT)	
