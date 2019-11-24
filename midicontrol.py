@@ -145,6 +145,8 @@ class MidiClearone(object):
             self.midi_settings["out_port"]
             )
         )
+        if enable_gpio:
+            self.gpio_setup(self.gpio)
         self.midi = Midi(
                             self.midi_settings["in_port"], 
                             self.midi_settings["out_port"]
@@ -246,11 +248,9 @@ class MidiClearone(object):
             
             if self.momentary_button_pushed:
                 self.clearone_device.send_data(momentary_press())
-                #return 
             if self.encoder_changed.changed:
-                
                 self.clearone_device.send_data(encoder_change())
-                #return
+
             
             value = midi_value()
             if 'data' not in command['midi']:
@@ -372,7 +372,7 @@ class MidiClearone(object):
             while self.run_thread:  
                 sleep(.05)
                 for pin in self.gpio:
-                    if GPIO.input(int(self.gpio[pin]['InPin'])):
+                    if GPIO.input(int(self.gpio[pin]['in_pin'])):
                         pin_triggered = pin
                         status = self.gpio[pin]['status']
                         if "data " in self.gpio[pin]:
@@ -396,7 +396,7 @@ class MidiClearone(object):
                 thread.start_new_thread( self.gpio_rx_thread, ())
         except:
             raise Exception("Unable to start Threads")
-        
+        print("\nReady and Running...")
         while self.run_thread:    
             sleep(300)
             self.clearone_device.send_data("#** VER")
@@ -422,6 +422,7 @@ class MidiClearone(object):
     def gpio_received(self,gpio_pins):
         for gpio_pin in gpio_pins:
             if gpio_pin:
+                pprint(gpio_pin)
                 for indivdual_commands in gpio_pin:
                     self.set_gpio(indivdual_commands[0], indivdual_commands[1])
     
@@ -439,6 +440,12 @@ class MidiClearone(object):
             msg = self.clearone_device.rx_data()
             self.clearone_data_received(msg)
     
+    def gpio_setup(self,gpio):
+        for command in gpio:
+            GPIO.setup(int(gpio[command]['in_pin']), GPIO.IN, pull_up_down=GPIO.PUD_DOWN)	
+            GPIO.setup(int(gpio[command]['out_pin']), GPIO.OUT)	
+            GPIO.output(int(gpio[command]['out_pin']), 1)
+
     def get_clearone_status(self):
         for command in self.commands:
             clearone_command = self.commands[command]["clearone"]
