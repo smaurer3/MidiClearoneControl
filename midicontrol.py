@@ -374,8 +374,9 @@ class MidiClearone(object):
                 for pin in self.gpio:
                     if GPIO.input(int(self.gpio[pin]['in_pin'])):
                         pin_triggered = pin
+                        
                         status = self.gpio[pin]['status']
-                        if "data " in self.gpio[pin]:
+                        if "data" in self.gpio[pin]:
                             data = self.gpio[pin]['data']
                         else:
                             data = 127
