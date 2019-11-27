@@ -109,11 +109,9 @@ class Midi(object):
 
     def list_midi_ports(self):
             port_msg = ("Invalid Midi Port\n" + "-"*40 + "\n\nAvailable Input Ports:\n")
-            first_in_port = None
             for p in mido.get_input_names():
                 port_msg += p
             port_msg += ("\n" + "-"*40 + "\nAvailable Output Ports:\n")
-            first_out_port = None
             for p in mido.get_output_names():
                 port_msg += p
             port_msg += (
@@ -239,7 +237,6 @@ class MidiClearone(object):
 
             def encoder_change():
                 self.encoder_changed.changed = False
-                print(get_value(rx_command))
                 value = (
                             get_value(rx_command) +
                             self.encoder_changed.amount
@@ -331,10 +328,8 @@ class MidiClearone(object):
                 dec = command["clearone"]["dec"]
                 step = 0
                 if midi_bytes.value == inc:
-                    print "INC"
                     step = amount
                 if midi_bytes.value == dec:
-                    print "DEC"
                     step = amount * -1
                 self.encoder_changed.amount = step
                 return (command["clearone"]["get_command"])
@@ -423,7 +418,6 @@ class MidiClearone(object):
     def gpio_received(self,gpio_pins):
         for gpio_pin in gpio_pins:
             if gpio_pin:
-                pprint(gpio_pin)
                 for indivdual_commands in gpio_pin:
                     self.set_gpio(indivdual_commands[0], indivdual_commands[1])
     
