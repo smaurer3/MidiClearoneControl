@@ -49,7 +49,6 @@ class Clearone(object):
                 return True
             except: 
                 return False
-    
 
     def authenticate(self, clearone_user, clearone_pass, ):    
         while self.device.recv(512).find('user') < 0:
@@ -105,7 +104,6 @@ class Midi(object):
         except:
             print(self.list_midi_ports())
             sys.exit(2)            
-
 
     def list_midi_ports(self):
             port_msg = ("Invalid Midi Port\n" + "-"*40 + "\n\nAvailable Input Ports:\n")
@@ -486,7 +484,6 @@ def main():
     print (" "*40 + "\nStarting Midi, Clearone and Keep Alive Threads...\n")  
     midi_clearone.start_threads()
     midi_clearone.clearone_device.close()
-
 
 def load_settings(file):  
     try:
