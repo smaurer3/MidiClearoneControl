@@ -182,7 +182,7 @@
                 "get_command" : "#G1 MUTE 1 F",
                 "max" : 1,
                 "min" : 0,
-                "default" : 1
+                "default" : 0
             },
             "midi" : {
                 "type" : "momentary",        
