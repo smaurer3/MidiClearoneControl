@@ -14,8 +14,8 @@
             "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0"
     },
  
-    "commands" : {
-        "_1" : {
+    "commands" : [
+        {
             "clearone": {
                 "set_command" : "#H2 GAIN A P %s A",
                 "get_command" : "#H2 GAIN A P",
@@ -26,9 +26,10 @@
             "midi" : {
                 "type" : "absolute",
                 "status" : 224
-            } 
+            }
         },
-        "_2" : {
+
+        {
             "clearone": {
                 "set_command" : "#H2 GAIN B P %s A",
                 "get_command" : "#H2 GAIN B P",
@@ -41,7 +42,7 @@
                 "status" : 225
             } 
         },
-        "_3" : {
+        {
             "clearone": {
                 "set_command" : "#H2 GAIN C P %s A",
                 "get_command" : "#H2 GAIN C P",
@@ -54,7 +55,7 @@
                 "status" : 226
             } 
         },
-        "_4" : {
+        {
             "clearone": {
                 "set_command" : "#H2 GAIN D P %s A",
                 "get_command" : "#H2 GAIN D P",
@@ -67,7 +68,7 @@
                 "status" : 227
             } 
         },
-        "_5" : {
+        {
             "clearone": {
                 "set_command" : "#H2 GAIN E P %s A",
                 "get_command" : "#H2 GAIN E P",
@@ -80,7 +81,7 @@
                 "status" : 228
             } 
         },
-        "_6" : {
+        {
             "clearone": {
                 "set_command" : "#G1 GAIN 1 F %s A",
                 "get_command" : "#G1 GAIN 1 F",
@@ -93,7 +94,7 @@
                 "status" : 229
             } 
         },
-        "_9" : {
+        {
             "clearone": {
                 "set_command" : "#H2 GAIN H P %s A",
                 "get_command" : "#H2 GAIN H P",
@@ -106,7 +107,7 @@
                 "status" : 232
             } 
         },  
-        "_10" : {
+        {
             "clearone": {
                 "set_command" : "#H2 MUTE A P %s",
                 "get_command" : "#H2 MUTE A P",
@@ -120,7 +121,7 @@
                 "data" : 16
             } 
         },
-        "_11" : {
+        {
             "clearone": {
                 "set_command" : "#H2 MUTE B P %s",
                 "get_command" : "#H2 MUTE B P",
@@ -134,7 +135,7 @@
                 "data" : 17
             } 
         },
-        "_12" : {
+        {
             "clearone": {
                 "set_command" : "#H2 MUTE C P %s",
                 "get_command" : "#H2 MUTE C P",
@@ -148,7 +149,7 @@
                 "data" : 18
             } 
         },
-        "_13" : {
+        {
             "clearone": {
                 "set_command" : "#H2 MUTE D P %s",
                 "get_command" : "#H2 MUTE D P",
@@ -162,7 +163,7 @@
                 "data" : 19
             } 
         },
-        "_14" : {
+        {
             "clearone": {
                 "set_command" : "#H2 MUTE E P %s",
                 "get_command" : "#H2 MUTE E P",
@@ -176,7 +177,7 @@
                 "data" : 20
             } 
         },
-        "_15" : {
+        {
             "clearone": {
                 "set_command" : "#G1 MUTE 1 F %s",
                 "get_command" : "#G1 MUTE 1 F",
@@ -191,7 +192,7 @@
             } 
         },
     
-        "_16" : {
+        {
             "clearone": {
                 "set_command" : "#H2 FILTER H P 1 6 20.00 %s 3.70",
                 "get_command" : "#H2 FILTER H P 1",
@@ -208,7 +209,7 @@
                 "data" : 22
             } 
         },
-        "_17" : {
+        {
             "clearone": {
                 "set_command" : "#H2 FILTER H P 2 6 20000.00 %s 3.70",
                 "get_command" : "#H2 FILTER H P 2",
@@ -225,19 +226,21 @@
                 "data" : 23
             } 
         }
-    }, 
-    "gpio" : {
-        "_1" : {
+    ], 
+    "gpio" : [
+        {
             "in_pin" : 31,
             "out_pin" : 35,
             "status" : 144,
             "data"  : 16
         },
-        "_2" : {
+        {
             "in_pin" : 33,
             "out_pin" : 37,
             "status" : 144,
             "data"  : 18
         }
-    }  
+    ]
+    
+
 }
