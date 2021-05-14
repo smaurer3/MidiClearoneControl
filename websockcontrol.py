@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import argparse
-from asyncio.windows_events import NULL  
+
 import json
-import asyncio
-import websockets
+from threading import Thread
+from simple_websocket_server import WebSocketServer, WebSocket
 import socket
 import sys
 import re
@@ -85,7 +85,7 @@ class Clearone(object):
         
     def rx_data(self):
         try:
-            msg = self.device.recv(512)
+            msg = self.device.recv(512).decode('utf-8')
             verboseprint("RAW Data Received: %s" % msg)
         except:
             return(False)
@@ -141,9 +141,9 @@ class WebsocketClearone(object):
 
     def get_matched_ws(self,data):
         matched_commands = []
-        verboseprint("Looking for '%s'" % data)
+        
         for command in self.commands:
-            verboseprint(command['command'])
+            
             if command['command'] == data:
                 matched_commands.append(command)
         return matched_commands
@@ -153,11 +153,14 @@ class WebsocketClearone(object):
             clearone_command = command['clearone']['set_command'] % (value)
             self.clearone_device.send_command(clearone_command)
 
+    def recv_clearone(self):
+        return self.clearone_device.rx_data()
+
     def get_clearone_commands(self,data):
         rx_commands = re.split("\r|OK>", data)   
         is_command = lambda d: '#' in d
         rx_commands = filter(is_command, rx_commands)
-        return self._match_clearone_command(rx_commands)
+        return self._match_clearone_commands(rx_commands)
 
     def generate_ws_command(self, commands):
         ws_commands = []
@@ -188,68 +191,79 @@ class WebsocketClearone(object):
                 value_index = set_command.index("%s")
                 return float(clearone_rx[value_index])
 
+clients = []
+class ws_Server(WebSocket):
 
-USERS = set()
-MESSAGE = {"not_set": ""}
-async def notify_state():
-    if USERS:  # asyncio.wait doesn't accept an empty list
-        print (MESSAGE)
-        message = json.dumps(MESSAGE)
-        print ("Message %s" % message)
+    def handle(self):
+        message = self.data
+        command = json.loads(message)
+        verboseprint(command)
+        if command["command"] == "_reload_":
+            ws_clearone.load_commands()
+        else:
+            matched_commands = ws_clearone.get_matched_ws(command['command'])
+            verboseprint(matched_commands)
+            ws_clearone.send_clearone(matched_commands, command['value'])
+        
+    def connected(self):
+        print(self.address, 'connected')
+        for client in clients:
+            client.send_message(self.address[0] + u' - connected')
+        clients.append(self)
 
-        await asyncio.wait([user.send(message) for user in USERS])
-async def register(websocket):
-    USERS.add(websocket)
-    await notify_state()
+    def handle_close(self):
+        clients.remove(self)
+        print(self.address, 'closed')
+        for client in clients:
+            client.send_message(self.address[0] + u' - disconnected')
 
-async def unregister(websocket):
-    USERS.remove(websocket)
-    await notify_state()
-
-async def ws_Server(websocket, path):
-   global MESSAGE
-   await register(websocket)
-   try:
-        async for message in websocket:
-            command = json.loads(message)
-            verboseprint(command)
-            if command["command"] == "_reload_":
-                ws_clearone.load_commands()
-            else:
-                matched_commands = ws_clearone.get_matched_ws(command['command'])
-                verboseprint(matched_commands)
-                ws_clearone.send_clearone(matched_commands, command['value'])
-                await notify_state()
-                       
-   finally:
-         await unregister(websocket)
-
-
+        
+def clearone_thread():
+    while True:
+        data_rx = ws_clearone.recv_clearone()
+        clearone_commands = ws_clearone.get_clearone_commands(data_rx)
+        commands = ws_clearone.generate_ws_command(clearone_commands)
+        message = json.dumps(commands)
+        
+        for client in clients:
+                client.send_message(message)
+        sleep(.01)      
 
 
-ws_clearone = NULL
+def server_thread():
+    server = WebSocketServer('', 8766, ws_Server)
+    print ("Starting Web socket server")
+    server.serve_forever()  
+
+ws_clearone = None 
 verboseprint = lambda s: None
 
 def main():
     global verboseprint
     global ws_clearone
-
     print ("-"*80 + "\Clearone Websocket Controller\n" + "-"*80)
     args = get_args()
     if args.verbose:
         verboseprint = lambda s: pprint(s)
-        
-        
+               
     print (" "*40 + "\nConnecting to Clearone and Midi Controller Devices...\n")
     ws_clearone = WebsocketClearone(args.settings)
-    
-    print ("Starting Web socket server")
-    start_server = websockets.serve(ws_Server, "127.0.0.1", 8766)
 
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()   
+    ws_thread = Thread(target=server_thread)
+    ws_thread.start()
+    clearone_run = Thread(target=clearone_thread)
+    clearone_run.start()
     
+      
+  
     
+  
+
+
+    while True:
+        print ("Keep Alive")
+        sleep(300)
+
     
 
 
