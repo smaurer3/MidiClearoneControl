@@ -153,6 +153,9 @@ class WebsocketClearone(object):
             clearone_command = command['clearone']['set_command'] % (value)
             self.clearone_device.send_command(clearone_command)
 
+    def send_keepalive(self):
+        self.clearone_device.send_data("#** VER")
+        
     def recv_clearone(self):
         return self.clearone_device.rx_data()
 
@@ -169,6 +172,13 @@ class WebsocketClearone(object):
             ws_command = command['command']['command']
             ws_commands.append({"command" : ws_command, "value" : value})
         return ws_commands           
+
+    def get_clearone_status(self):
+        for command in self.commands:
+            clearone_command = command["clearone"]
+            self.clearone_device.send_command(
+                                clearone_command["get_command"]
+                                )
 
     def _match_clearone_commands(self, rx_commands):       
             ws_commands = []
@@ -200,6 +210,9 @@ class ws_Server(WebSocket):
         verboseprint(command)
         if command["command"] == "_reload_":
             ws_clearone.load_commands()
+
+        elif command["command"] == "_refresh_":
+            ws_clearone.get_clearone_status()
         else:
             matched_commands = ws_clearone.get_matched_ws(command['command'])
             verboseprint(matched_commands)
@@ -253,17 +266,11 @@ def main():
     ws_thread.start()
     clearone_run = Thread(target=clearone_thread)
     clearone_run.start()
-    
-      
-  
-    
-  
-
-
+    ws_clearone.send_keepalive()
     while True:
         print ("Keep Alive")
         sleep(300)
-
+        ws_clearone.send_keepalive()
     
 
 
