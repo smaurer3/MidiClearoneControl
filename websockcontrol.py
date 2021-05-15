@@ -10,6 +10,7 @@ import sys
 import re
 from time import sleep
 from pprint import pprint
+import time
 
 class Clearone(object):
     def __init__(self, hostname, username, password):
@@ -102,12 +103,22 @@ class WebsocketClearone(object):
         self.clearone_settings = None
         self.load_commands()
         self.run_thread = False
+        self.clearone_device = None
+        
+        
+    def connect_clearone(self):  
+        verboseprint("Trying Connecting to Clearone")  
         self.clearone_device = Clearone(
-                                    self.clearone_settings["hostname"],
-                                    self.clearone_settings["user"],
-                                    self.clearone_settings["password"]
-                                )
-              
+            self.clearone_settings["hostname"],
+            self.clearone_settings["user"],
+            self.clearone_settings["password"]
+        )
+
+    def disconnect_clearone(self):
+        verboseprint("Disconnecting") 
+        self.clearone_device.close()
+        self.clearone_device = None
+
     def load_commands(self):
         settings = self._load_settings(self.settings_file)
         self.commands = settings["websocket"]
@@ -219,32 +230,54 @@ class ws_Server(WebSocket):
             ws_clearone.send_clearone(matched_commands, command['value'])
         
     def connected(self):
+        global clients_connected
         print(self.address, 'connected')
+        if not clients_connected:
+            ws_clearone.connect_clearone()
+            clients_connected = True
+
         for client in clients:
             client.send_message(self.address[0] + u' - connected')
         clients.append(self)
 
     def handle_close(self):
+        global clients_connected
         clients.remove(self)
+        if len(clients) == 0:
+            ws_clearone.disconnect_clearone()
+            clients_connected = False
         print(self.address, 'closed')
         for client in clients:
             client.send_message(self.address[0] + u' - disconnected')
 
-        
+clients_connected = False
+
 def clearone_thread():
+    global clients_connected
+    timer = time.time() + 300
     while True:
-        data_rx = ws_clearone.recv_clearone()
-        clearone_commands = ws_clearone.get_clearone_commands(data_rx)
-        commands = ws_clearone.generate_ws_command(clearone_commands)
-        message = json.dumps(commands)
-        
-        for client in clients:
-                client.send_message(message)
-        sleep(.01)      
+        sleep(.01)
+        if clients_connected:
+            try:
+                data_rx = ws_clearone.recv_clearone()
+                clearone_commands = ws_clearone.get_clearone_commands(data_rx)
+                commands = ws_clearone.generate_ws_command(clearone_commands)
+                message = json.dumps(commands)
+                
+                for client in clients:
+                        client.send_message(message)
+                
+
+                if time.time() > timer:
+                    ws_clearone.send_keepalive() 
+                    timer = time.time() + 300
+            except Exception as e:
+                verboseprint("Something Went Wrong: %s, Probably all clients disconnected." % e)
+                clients_connected = False
 
 
-def server_thread():
-    server = WebSocketServer('', 8766, ws_Server)
+def server_thread(port):
+    server = WebSocketServer('', port, ws_Server)
     print ("Starting Web socket server")
     server.serve_forever()  
 
@@ -259,18 +292,16 @@ def main():
     if args.verbose:
         verboseprint = lambda s: pprint(s)
                
-    print (" "*40 + "\nConnecting to Clearone and Midi Controller Devices...\n")
     ws_clearone = WebsocketClearone(args.settings)
-
-    ws_thread = Thread(target=server_thread)
+    port = args.port
+    print(port)
+    ws_thread = Thread(target=server_thread, args=(port,))
     ws_thread.start()
+
     clearone_run = Thread(target=clearone_thread)
     clearone_run.start()
-    ws_clearone.send_keepalive()
-    while True:
-        print ("Keep Alive")
-        sleep(300)
-        ws_clearone.send_keepalive()
+  
+
     
 
 
@@ -292,6 +323,12 @@ def get_args():
         "-s", 
         "--settings",
         help="Setiings JSON file",
+        required=True
+    )
+    required_argument.add_argument(
+        "-p", 
+        "--port",
+        help="Specify Websocket Port",
         required=True
     )
 

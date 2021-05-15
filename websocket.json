@@ -5,8 +5,8 @@
         "password" : "converge",
         "hostname" : "hall.aperturefilms.com.au",
         "startup_commands" : ["#H2 FEDR 2 J","#H2 FEDR 4 J"]
-    }, 
-
+    },
+ 
     "websocket" : [
         {   
             "clearone" : {
