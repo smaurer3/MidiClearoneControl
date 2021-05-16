@@ -212,44 +212,50 @@ class WebsocketClearone(object):
                 value_index = set_command.index("%s")
                 return float(clearone_rx[value_index])
 
-clients = []
+
 class ws_Server(WebSocket):
 
     def handle(self):
-        message = self.data
-        command = json.loads(message)
-        verboseprint(command)
-        if command["command"] == "_reload_":
-            ws_clearone.load_commands()
+        try:
+            message = self.data
+            command = json.loads(message)
+            verboseprint(command)
+            if command["command"] == "_reload_":
+                ws_clearone.load_commands()
 
-        elif command["command"] == "_refresh_":
-            ws_clearone.get_clearone_status()
-        else:
-            matched_commands = ws_clearone.get_matched_ws(command['command'])
-            verboseprint(matched_commands)
-            ws_clearone.send_clearone(matched_commands, command['value'])
+            elif command["command"] == "_refresh_":
+                ws_clearone.get_clearone_status()
+            else:
+                matched_commands = ws_clearone.get_matched_ws(command['command'])
+                verboseprint(matched_commands)
+                ws_clearone.send_clearone(matched_commands, command['value'])
+        except Exception as e:
+                verboseprint("Something Went Wrong in handle: %s" % e)
         
     def connected(self):
         global clients_connected
-        print(self.address, 'connected')
-        if not clients_connected:
-            ws_clearone.connect_clearone()
-            clients_connected = True
-
-        for client in clients:
-            client.send_message(self.address[0] + u' - connected')
-        clients.append(self)
+        try:
+            print(self.address, 'connected')
+            if not clients_connected:
+                ws_clearone.connect_clearone()
+                clients_connected = True
+            clients.append(self)
+        except Exception as e:
+                verboseprint("Something Went Wrong in connected: %s" % e)
 
     def handle_close(self):
         global clients_connected
-        clients.remove(self)
-        if len(clients) == 0:
-            ws_clearone.disconnect_clearone()
-            clients_connected = False
-        print(self.address, 'closed')
-        for client in clients:
-            client.send_message(self.address[0] + u' - disconnected')
+        try:
+        
+            clients.remove(self)
+            if len(clients) == 0:
+                ws_clearone.disconnect_clearone()
+                clients_connected = False
+            print(self.address, 'closed')
+        except Exception as e:
+                verboseprint("Something Went Wrong in handle_close: %s" % e)
 
+clients = []
 clients_connected = False
 
 def clearone_thread():
@@ -266,7 +272,6 @@ def clearone_thread():
                 
                 for client in clients:
                         client.send_message(message)
-                
 
                 if time.time() > timer:
                     ws_clearone.send_keepalive() 
