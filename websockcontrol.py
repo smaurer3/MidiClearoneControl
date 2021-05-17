@@ -213,6 +213,9 @@ class WebsocketClearone(object):
                 return float(clearone_rx[value_index])
 
 
+clients = []
+clearone_connected = False
+
 class ws_Server(WebSocket):
 
     def handle(self):
@@ -231,54 +234,75 @@ class ws_Server(WebSocket):
                 ws_clearone.send_clearone(matched_commands, command['value'])
         except Exception as e:
                 verboseprint("Something Went Wrong in handle: %s" % e)
+                self.remove_me(self)
         
     def connected(self):
-        global clients_connected
+        global clearone_connected
         try:
             print(self.address, 'connected')
-            if not clients_connected:
+            if not clearone_connected:
                 ws_clearone.connect_clearone()
-                clients_connected = True
+                clearone_connected = True
             clients.append(self)
         except Exception as e:
                 verboseprint("Something Went Wrong in connected: %s" % e)
+                self.remove_me(self)
 
     def handle_close(self):
-        global clients_connected
+        global clearone_connected
         try:
-        
             clients.remove(self)
             if len(clients) == 0:
                 ws_clearone.disconnect_clearone()
-                clients_connected = False
+                clearone_connected = False
             print(self.address, 'closed')
         except Exception as e:
                 verboseprint("Something Went Wrong in handle_close: %s" % e)
+                self.remove_me(self)
+    
+    def remove_me(self):
+        try:
+            print("Trying to remove client")
+            clients.remove(self)
+        except Exception as e:
+            verboseprint("Couldn't remove client: %s" % e)
 
-clients = []
-clients_connected = False
+
 
 def clearone_thread():
-    global clients_connected
-    timer = time.time() + 300
+    global clearone_connected
     while True:
         sleep(.01)
-        if clients_connected:
+        if clearone_connected:
             try:
                 data_rx = ws_clearone.recv_clearone()
                 clearone_commands = ws_clearone.get_clearone_commands(data_rx)
                 commands = ws_clearone.generate_ws_command(clearone_commands)
                 message = json.dumps(commands)
                 
+                
                 for client in clients:
                         client.send_message(message)
 
-                if time.time() > timer:
-                    ws_clearone.send_keepalive() 
-                    timer = time.time() + 300
             except Exception as e:
                 verboseprint("Something Went Wrong: %s, Probably all clients disconnected." % e)
-                clients_connected = False
+                clearone_connected = False
+                
+def clearone_keepalive_thread():
+    global clearone_connected
+    timer = time.time() + 60
+    verboseprint("Keep Alive Started")
+    while True:
+        sleep(10)
+        if clearone_connected:
+            try:
+                if time.time() > timer:
+                    verboseprint("Keep alive - sending request")
+                    ws_clearone.send_keepalive() 
+                    timer = time.time() + 60
+            except Exception as e:
+                verboseprint("Something Went Wrong: %s" % e)
+                clearone_connected = False               
 
 
 def server_thread(port):
@@ -305,6 +329,9 @@ def main():
 
     clearone_run = Thread(target=clearone_thread)
     clearone_run.start()
+
+    clearone_keepalive = Thread(target=clearone_keepalive_thread)
+    clearone_keepalive.start()
   
 
     
