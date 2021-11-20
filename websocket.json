@@ -1,6 +1,6 @@
 {
     "clearone" : {
-        "devices" : ["H2", "G1"],
+        "devices" : ["H2", "10"],
         "user" : "clearone",
         "password" : "converge",
         "hostname" : "hall.aperturefilms.com.au",
@@ -55,8 +55,8 @@
         },
         {   
             "clearone" : {
-                "set_command" : "#G1 GAIN 1 F %s A",
-                "get_command" : "#G1 GAIN 1 F",
+                "set_command" : "#10 GAIN 1 F %s A",
+                "get_command" : "#10 GAIN 1 F",
                 "max" : 10,
                 "min" : -35
             },
@@ -123,8 +123,8 @@
         },
         {
             "clearone": {
-                "set_command" : "#G1 MUTE 1 F %s",
-                "get_command" : "#G1 MUTE 1 F",
+                "set_command" : "#10 MUTE 1 F %s",
+                "get_command" : "#10 MUTE 1 F",
                 "max" : 1,
                 "min" : 0,
                 "default" : 0
