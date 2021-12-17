@@ -3,7 +3,7 @@
         "devices" : ["H2", "10"],
         "user" : "clearone",
         "password" : "converge",
-        "hostname" : "hall.aperturefilms.com.au",
+        "hostname" : "192.168.90.102",
         "startup_commands" : ["#H2 FEDR 2 J","#H2 FEDR 4 J"]
     },
  
