@@ -260,7 +260,7 @@ class ws_Server(WebSocket):
             if len(clients) == 0:
                 ws_clearone.disconnect_clearone()
                 clearone_connected = False
-            print(self.address, 'closed')
+            print(self.address, f'closed: clients remaining={len(clients)}')
         except Exception as e:
                 verboseprint("Something Went Wrong in handle_close: %s" % e)
                 self.remove_me(self)
