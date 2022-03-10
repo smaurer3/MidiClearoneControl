@@ -240,7 +240,7 @@ class ws_Server(WebSocket):
     def connected(self):
         global clearone_connected
         try:
-            verboseprint(self.address, 'WS Client connected')
+            verboseprint('WS Client connected')
             if not clearone_connected:
                 try:
                     ws_clearone.disconnect_clearone()
@@ -254,7 +254,7 @@ class ws_Server(WebSocket):
 
     def handle_close(self):
         global clearone_connected
-        verboseprint(self.address, 'WS Client Disconnected')
+        verboseprint('WS Client Disconnected')
         try:
             clients.remove(self)
             if len(clients) == 0:
