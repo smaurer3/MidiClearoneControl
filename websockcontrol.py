@@ -19,7 +19,7 @@ class Clearone(object):
         self.hostname = hostname
         self.username = username
         self.password = password
-        self.login()
+        #self.login()
 
     def login(self):
         try:
@@ -28,31 +28,31 @@ class Clearone(object):
         except:
             pass
         retry_delay = 10
-        
+
         while not self.connect(self.hostname):
-            print("No response from Clearone, waiting %s to retry" % retry_delay)
-            sleep(retry_delay)    
+            print(
+                "No response from Clearone, waiting %s to retry" % retry_delay
+                )
+            sleep(retry_delay)
             retry_delay += 1
             if retry_delay > 20:
                 raise Exception("Could Not Connnect To Clearone")
 
-        status = self.authenticate(self.username, self.password)
-        if not status:
-            raise Exception("Could not authenticate Clearone")
+        return self.authenticate(self.username, self.password)
 
-    def connect(self, clearone_ip): 
+    def connect(self, clearone_ip):
         while True:
             try:
                 self.device = socket.socket()
                 self.device.connect((clearone_ip, self.telnet_port))
                 return True
-            except: 
+            except:
                 return False
 
-    def authenticate(self, clearone_user, clearone_pass, ):    
+    def authenticate(self, clearone_user, clearone_pass, ):
         while self.device.recv(512).find('user'.encode()) < 0:
             pass
-        login = self.send_login(clearone_user, clearone_pass)  
+        login = self.send_login(clearone_user, clearone_pass)
         return(login)
 
     def send_login(self, clearone_user, clearone_pass):
@@ -75,7 +75,7 @@ class Clearone(object):
         except Exception as e:
             verboseprint("Failed to send data: %s - %s" % (data, e))
             return(False)
-        
+
     def send_command(self,command):
         if self.send_data((command + "\r")):
             return(True)
@@ -83,7 +83,7 @@ class Clearone(object):
         if self.send_data((command + "\r")):
             return(True)
         return(False)
-        
+
     def rx_data(self):
         try:
             msg = self.device.recv(512).decode('utf-8')
@@ -91,11 +91,11 @@ class Clearone(object):
         except:
             return(False)
         return(msg)
-    
+
     def close(self):
         self.device.close()
 
-            
+
 class WebsocketClearone(object):
     def __init__(self, settings):
         self.settings_file = settings
@@ -104,15 +104,16 @@ class WebsocketClearone(object):
         self.load_commands()
         self.run_thread = False
         self.clearone_device = None
-        
-        
-    def connect_clearone(self):  
-        verboseprint("Trying Connecting to Clearone")  
+
+
+    def connect_clearone(self):
+        verboseprint("Trying Connecting to Clearone")
         self.clearone_device = Clearone(
             self.clearone_settings["hostname"],
             self.clearone_settings["user"],
             self.clearone_settings["password"]
         )
+        return self.clearone_device.login()
 
     def disconnect_clearone(self):
         verboseprint("Disconnecting") 
@@ -148,17 +149,17 @@ class WebsocketClearone(object):
             devices = filter(lambda r: "#" in r, responses)
             for device in device_list:
                 if any(device in s for s in devices):
-                    device_list_count -= 1 
+                    device_list_count -= 1
 
     def get_matched_ws(self,data):
         matched_commands = []
-        
+
         for command in self.commands:
-            
+
             if command['command'] == data:
                 matched_commands.append(command)
         return matched_commands
-    
+
     def send_clearone(self, commands, value):
         for command in commands:
             clearone_command = command['clearone']['set_command'] % (value)
@@ -166,12 +167,12 @@ class WebsocketClearone(object):
 
     def send_keepalive(self):
         self.clearone_device.send_data("#** VER")
-        
+
     def recv_clearone(self):
         return self.clearone_device.rx_data()
 
     def get_clearone_commands(self,data):
-        rx_commands = re.split("\r|OK>", data)   
+        rx_commands = re.split("\r|OK>", data)
         is_command = lambda d: '#' in d
         rx_commands = filter(is_command, rx_commands)
         return self._match_clearone_commands(rx_commands)
@@ -182,7 +183,7 @@ class WebsocketClearone(object):
             value = command['value']
             ws_command = command['command']['command']
             ws_commands.append({"command" : ws_command, "value" : value})
-        return ws_commands           
+        return ws_commands
 
     def get_clearone_status(self):
         for command in self.commands:
@@ -191,7 +192,7 @@ class WebsocketClearone(object):
                                 clearone_command["get_command"]
                                 )
 
-    def _match_clearone_commands(self, rx_commands):       
+    def _match_clearone_commands(self, rx_commands):
             ws_commands = []
             for rx_command in rx_commands:
                 rx_to_match = rx_command.strip()
@@ -200,7 +201,7 @@ class WebsocketClearone(object):
                     if re.match(regex,rx_to_match):
                         ws_commands.append(
                             {
-                                "command" : command, 
+                                "command" : command,
                                 "value" : self._get_value(rx_to_match, command)
                             }
                         )
@@ -235,14 +236,18 @@ class ws_Server(WebSocket):
         except Exception as e:
                 verboseprint("Something Went Wrong in handle: %s" % e)
                 self.remove_me(self)
-        
+
     def connected(self):
         global clearone_connected
+        verboseprint(self.address, 'WS Client connected')
         try:
-            print(self.address, 'connected')
+
             if not clearone_connected:
-                ws_clearone.connect_clearone()
-                clearone_connected = True
+                try:
+                    ws_clearone.disconnect_clearone()
+                except:
+                    pass
+                clearone_connected = ws_clearone.connect_clearone()
             clients.append(self)
         except Exception as e:
                 verboseprint("Something Went Wrong in connected: %s" % e)
@@ -250,6 +255,7 @@ class ws_Server(WebSocket):
 
     def handle_close(self):
         global clearone_connected
+        verboseprint(self.address, 'WS Client Disconnected')
         try:
             clients.remove(self)
             if len(clients) == 0:
@@ -259,7 +265,7 @@ class ws_Server(WebSocket):
         except Exception as e:
                 verboseprint("Something Went Wrong in handle_close: %s" % e)
                 self.remove_me(self)
-    
+
     def remove_me(self):
         try:
             print("Trying to remove client")
@@ -279,15 +285,15 @@ def clearone_thread():
                 clearone_commands = ws_clearone.get_clearone_commands(data_rx)
                 commands = ws_clearone.generate_ws_command(clearone_commands)
                 message = json.dumps(commands)
-                
-                
+
+
                 for client in clients:
                         client.send_message(message)
 
             except Exception as e:
                 verboseprint("Something Went Wrong: %s, Probably all clients disconnected." % e)
                 clearone_connected = False
-                
+
 def clearone_keepalive_thread():
     global clearone_connected
     timer = time.time() + 60
@@ -298,11 +304,11 @@ def clearone_keepalive_thread():
             try:
                 if time.time() > timer:
                     verboseprint("Keep alive - sending request")
-                    ws_clearone.send_keepalive() 
+                    ws_clearone.send_keepalive()
                     timer = time.time() + 60
             except Exception as e:
                 verboseprint("Something Went Wrong: %s" % e)
-                clearone_connected = False               
+                clearone_connected = False
 
 
 def server_thread(port):
