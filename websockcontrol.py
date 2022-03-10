@@ -239,9 +239,8 @@ class ws_Server(WebSocket):
 
     def connected(self):
         global clearone_connected
-        verboseprint(self.address, 'WS Client connected')
         try:
-
+            verboseprint(self.address, 'WS Client connected')
             if not clearone_connected:
                 try:
                     ws_clearone.disconnect_clearone()
@@ -322,14 +321,13 @@ verboseprint = lambda s: None
 def main():
     global verboseprint
     global ws_clearone
-    print ("-"*80 + "\Clearone Websocket Controller\n" + "-"*80)
+    print ("-"*80 + "\nClearone Websocket Controller\n" + "-"*80)
     args = get_args()
     if args.verbose:
         verboseprint = lambda s: pprint(s)
                
     ws_clearone = WebsocketClearone(args.settings)
     port = args.port
-    print(port)
     ws_thread = Thread(target=server_thread, args=(port,))
     ws_thread.start()
 
