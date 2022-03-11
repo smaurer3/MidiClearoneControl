@@ -26,7 +26,7 @@ class Clearone(object):
             self.device.close()
             self.device = None
         except:
-            pass
+            verboseprint("Undable to close, proably wasn't connected")
         retry_delay = 10
 
         while not self.connect(self.hostname):
@@ -245,7 +245,7 @@ class ws_Server(WebSocket):
                 try:
                     ws_clearone.disconnect_clearone()
                 except:
-                    pass
+                    verboseprint("DSP was not connected")
                 clearone_connected = ws_clearone.connect_clearone()
             clients.append(self)
         except Exception as e:
@@ -325,7 +325,7 @@ def main():
     args = get_args()
     if args.verbose:
         verboseprint = lambda s: pprint(s)
-               
+
     ws_clearone = WebsocketClearone(args.settings)
     port = args.port
     ws_thread = Thread(target=server_thread, args=(port,))
@@ -336,9 +336,9 @@ def main():
 
     clearone_keepalive = Thread(target=clearone_keepalive_thread)
     clearone_keepalive.start()
-  
 
-    
+
+
 
 
 
