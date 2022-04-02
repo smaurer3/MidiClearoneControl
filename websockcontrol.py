@@ -285,9 +285,9 @@ def clearone_thread():
             try:
                 data_rx = ws_clearone.recv_clearone()
                 clearone_commands = ws_clearone.get_clearone_commands(data_rx)
+                verboseprint(clearone_commands)
                 commands = ws_clearone.generate_ws_command(clearone_commands)
                 message = json.dumps(commands)
-                verboseprint(len(message))
                 if len(message) > 2:
                     for client in clients:
                             verboseprint([f'Sending to client: {client}',f'Message: {message}'])
