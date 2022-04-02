@@ -288,7 +288,7 @@ def clearone_thread():
                         client.send_message(message)
 
             except Exception as e:
-                verboseprint("Something Went Wrong: %s,  % e)
+                verboseprint("Something Went Wrong: %s" % e)
 
 def clearone_keepalive_thread():
 
