@@ -215,7 +215,7 @@ class WebsocketClearone(object):
 
 
 clients = []
-clearone_connected = False
+
 
 class ws_Server(WebSocket):
 
@@ -238,28 +238,28 @@ class ws_Server(WebSocket):
                 self.remove_me(self)
 
     def connected(self):
-        global clearone_connected
+
         try:
             verboseprint('WS Client connected')
-            if not clearone_connected:
+            if len(clients) == 0:
                 try:
                     ws_clearone.disconnect_clearone()
                 except:
                     verboseprint("DSP was not connected")
-                clearone_connected = ws_clearone.connect_clearone()
-            clients.append(self)
+                if ws_clearone.connect_clearone():
+                    clients.append(self)
         except Exception as e:
                 verboseprint("Something Went Wrong in connected: %s" % e)
                 self.remove_me(self)
 
     def handle_close(self):
-        global clearone_connected
+
         verboseprint('WS Client Disconnected')
         try:
             clients.remove(self)
             if len(clients) == 0:
                 ws_clearone.disconnect_clearone()
-                clearone_connected = False
+
             print(self.address, f'closed: clients remaining={len(clients)}')
         except Exception as e:
                 verboseprint("Something Went Wrong in handle_close: %s" % e)
@@ -275,10 +275,10 @@ class ws_Server(WebSocket):
 
 
 def clearone_thread():
-    global clearone_connected
+
     while True:
         sleep(.01)
-        if clearone_connected:
+        if len(clients) > 0:
             try:
                 data_rx = ws_clearone.recv_clearone()
                 clearone_commands = ws_clearone.get_clearone_commands(data_rx)
@@ -288,16 +288,15 @@ def clearone_thread():
                         client.send_message(message)
 
             except Exception as e:
-                verboseprint("Something Went Wrong: %s, Probably all clients disconnected." % e)
-                clearone_connected = False
+                verboseprint("Something Went Wrong: %s,  % e)
 
 def clearone_keepalive_thread():
-    global clearone_connected
+
     timer = time.time() + 60
     verboseprint("Keep Alive Started")
     while True:
         sleep(10)
-        if clearone_connected:
+        if len(clients) > 0:
             try:
                 if time.time() > timer:
                     verboseprint("Keep alive - sending request")
@@ -305,7 +304,7 @@ def clearone_keepalive_thread():
                     timer = time.time() + 60
             except Exception as e:
                 verboseprint("Something Went Wrong: %s" % e)
-                clearone_connected = False
+
 
 
 def server_thread(port):
