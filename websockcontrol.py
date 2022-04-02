@@ -248,6 +248,9 @@ class ws_Server(WebSocket):
                     verboseprint("DSP was not connected")
                 if ws_clearone.connect_clearone():
                     clients.append(self)
+            else:
+                clients.append(self)
+ 
         except Exception as e:
                 verboseprint("Something Went Wrong in connected: %s" % e)
                 self.remove_me(self)
@@ -285,7 +288,7 @@ def clearone_thread():
                 commands = ws_clearone.generate_ws_command(clearone_commands)
                 message = json.dumps(commands)
                 for client in clients:
-                        verboseprint(client)
+                        verboseprint(f'sending to client: {client}')
                         client.send_message(message)
 
             except Exception as e:
