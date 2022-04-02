@@ -288,7 +288,7 @@ def clearone_thread():
                 commands = ws_clearone.generate_ws_command(clearone_commands)
                 message = json.dumps(commands)
                 for client in clients:
-                        verboseprint(f'sending to client: {client}')
+                        verboseprint(f'Sending to client: {client}\n\tMessage: {message}')
                         client.send_message(message)
 
             except Exception as e:
