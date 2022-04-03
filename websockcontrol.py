@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 import argparse
+from concurrent.futures import thread
 
 import json
 from threading import Thread
+from threading import Event
 from simple_websocket_server import WebSocketServer, WebSocket
 import socket
 import sys
@@ -176,7 +178,7 @@ class WebsocketClearone(object):
         verboseprint(f'RX_COMMANDS: {rx_commands}')
         is_command = lambda d: '#' in d
         rx_commands = filter(is_command, rx_commands)
-        verboseprint(f'IS_COMMAND: {rx_commands}')
+        verboseprint(f'IS_COMMAND: {list(rx_commands)}')
         return self._match_clearone_commands(rx_commands)
 
     def generate_ws_command(self, commands):
@@ -316,7 +318,7 @@ def clearone_keepalive_thread():
 
 
 def server_thread(port):
-    server = WebSocketServer('', port, ws_Server)
+    server = WebSocketServer('', port, ws_Serverq)
     print ("Starting Web socket server")
     server.serve_forever()  
 
@@ -342,6 +344,14 @@ def main():
     clearone_keepalive = Thread(target=clearone_keepalive_thread)
     clearone_keepalive.start()
 
+    while True:
+        if ws_thread.is_alive() != True:
+            ws_thread.start()
+        if clearone_run.is_alive() != True:
+            clearone_run.start()
+        if ws_thread.is_alive() != True:
+            clearone_keepalive.start()
+        sleep(10)
 
 
 
