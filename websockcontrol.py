@@ -318,7 +318,7 @@ def clearone_keepalive_thread():
 
 
 def server_thread(port):
-    server = WebSocketServer('', port, ws_Serverq)
+    server = WebSocketServer('', port, ws_Server)
     print ("Starting Web socket server")
     server.serve_forever()  
 
@@ -344,14 +344,8 @@ def main():
     clearone_keepalive = Thread(target=clearone_keepalive_thread)
     clearone_keepalive.start()
 
-    while True:
-        if ws_thread.is_alive() != True:
-            ws_thread.start()
-        if clearone_run.is_alive() != True:
-            clearone_run.start()
-        if ws_thread.is_alive() != True:
-            clearone_keepalive.start()
-        sleep(10)
+
+        
 
 
 
