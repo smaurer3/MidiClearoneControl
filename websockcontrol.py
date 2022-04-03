@@ -345,7 +345,14 @@ def main():
     clearone_keepalive.start()
 
 
-        
+    while True:
+        sleep(10)
+        if ws_thread.is_alive() != True:
+            ws_thread.start()
+        if clearone_run.is_alive() != True:
+            clearone_run.start()
+        if ws_thread.is_alive() != True:
+            clearone_keepalive.start()   
 
 
 
