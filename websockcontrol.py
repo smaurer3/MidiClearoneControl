@@ -198,6 +198,7 @@ class WebsocketClearone(object):
 
     def _match_clearone_commands(self, rx_commands):
             ws_commands = []
+            verboseprint(f'match this: {rx_commands}')
             for rx_command in rx_commands:
                 verboseprint(f'First RX Command: {rx_command}')
                 rx_to_match = rx_command.strip()
