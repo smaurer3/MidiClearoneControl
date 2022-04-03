@@ -175,10 +175,8 @@ class WebsocketClearone(object):
 
     def get_clearone_commands(self,data):
         rx_commands = re.split("\r|OK>", data)
-        verboseprint(f'RX_COMMANDS: {rx_commands}')
         is_command = lambda d: '#' in d
         rx_commands = list(filter(is_command, rx_commands))
-        #verboseprint(f'IS_COMMAND: {rx_commands}')
         return self._match_clearone_commands(rx_commands)
 
     def generate_ws_command(self, commands):
@@ -348,18 +346,6 @@ def main():
 
     clearone_keepalive = Thread(target=clearone_keepalive_thread)
     clearone_keepalive.start()
-
-
-    while True:
-        sleep(10)
-        if ws_thread.is_alive() != True:
-            ws_thread.start()
-        if clearone_run.is_alive() != True:
-            clearone_run.start()
-        if ws_thread.is_alive() != True:
-            clearone_keepalive.start()   
-
-
 
 
 
