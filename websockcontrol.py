@@ -177,8 +177,8 @@ class WebsocketClearone(object):
         rx_commands = re.split("\r|OK>", data)
         verboseprint(f'RX_COMMANDS: {rx_commands}')
         is_command = lambda d: '#' in d
-        rx_commands = filter(is_command, rx_commands)
-        verboseprint(f'IS_COMMAND: {list(rx_commands)}')
+        rx_commands = list(filter(is_command, rx_commands))
+        #verboseprint(f'IS_COMMAND: {rx_commands}')
         return self._match_clearone_commands(rx_commands)
 
     def generate_ws_command(self, commands):
@@ -198,7 +198,7 @@ class WebsocketClearone(object):
 
     def _match_clearone_commands(self, rx_commands):
             ws_commands = []
-            verboseprint(f'match this: {list(rx_commands)}')
+            verboseprint(f'match this: {rx_commands}')
             for rx_command in rx_commands:
                 verboseprint(f'First RX Command: {rx_command}')
                 rx_to_match = rx_command.strip()
