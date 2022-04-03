@@ -319,7 +319,6 @@ def clearone_keepalive_thread():
                 verboseprint("Something Went Wrong: %s" % e)
 
 
-
 def server_thread(port):
     server = WebSocketServer('', port, ws_Server)
     print ("Starting Web socket server")
@@ -346,8 +345,6 @@ def main():
 
     clearone_keepalive = Thread(target=clearone_keepalive_thread)
     clearone_keepalive.start()
-
-
 
 def _map(value, leftMin, leftMax, rightMin, rightMax): 
     leftSpan = leftMax - leftMin
