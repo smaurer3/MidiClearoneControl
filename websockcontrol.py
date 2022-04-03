@@ -202,13 +202,16 @@ class WebsocketClearone(object):
                 rx_to_match = rx_command.strip()
                 for command in self.commands:
                     regex = (command["clearone"]["set_command"] % ".*")
+                    verboseprint(f'Trying REGEX Match Expression: {regex} String {rx_to_match}')
                     if re.match(regex,rx_to_match):
+                        verboseprint("Match=True")
                         ws_commands.append(
                             {
                                 "command" : command,
                                 "value" : self._get_value(rx_to_match, command)
                             }
                         )
+            verboseprint(f'Websocket Commands for Clients: {list(ws_commands)}')
             return ws_commands
 
     def _get_value(self, clearone_rx, command):
