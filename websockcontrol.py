@@ -166,6 +166,7 @@ class WebsocketClearone(object):
         for command in commands:
             clearone_command = command['clearone']['set_command'] % (value)
             self.clearone_device.send_command(clearone_command)
+            
 
     def send_keepalive(self):
         self.clearone_device.send_data("#** VER")
@@ -362,7 +363,7 @@ def get_args():
     required_argument.add_argument(
         "-s", 
         "--settings",
-        help="Setiings JSON file",
+        help="Settings JSON file",
         required=True
     )
     required_argument.add_argument(
@@ -381,4 +382,5 @@ def get_args():
     
     return(parser.parse_args())
 
-main()
+if __name__ == "__main__":
+    main()
