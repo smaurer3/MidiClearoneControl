@@ -1,18 +1,15 @@
 #!/usr/bin/python3
 
 import argparse
-from concurrent.futures import thread
-
 import json
 from threading import Thread
-from threading import Event
 from simple_websocket_server import WebSocketServer, WebSocket
 import socket
-import sys
 import re
 from time import sleep
 from pprint import pprint
 import time
+
 
 class Clearone(object):
     def __init__(self, hostname, username, password):
@@ -21,16 +18,15 @@ class Clearone(object):
         self.hostname = hostname
         self.username = username
         self.password = password
-        #self.login()
 
     def login(self):
         try:
             self.device.close()
             self.device = None
         except:
-            verboseprint("Undable to close, proably wasn't connected")
-        retry_delay = 10
+            verboseprint("Unable to close, probably wasn't connected")
 
+        retry_delay = 10
         while not self.connect(self.hostname):
             print(
                 "No response from Clearone, waiting %s to retry" % retry_delay
@@ -107,7 +103,6 @@ class WebsocketClearone(object):
         self.run_thread = False
         self.clearone_device = None
 
-
     def connect_clearone(self):
         verboseprint("Trying Connecting to Clearone")
         self.clearone_device = Clearone(
@@ -118,7 +113,7 @@ class WebsocketClearone(object):
         return self.clearone_device.login()
 
     def disconnect_clearone(self):
-        verboseprint("Disconnecting") 
+        verboseprint("Disconnecting")
         self.clearone_device.close()
         self.clearone_device = None
 
@@ -128,7 +123,7 @@ class WebsocketClearone(object):
         verboseprint(self.commands)
         self.clearone_settings = settings["clearone"]
 
-    def _load_settings(self,file):  
+    def _load_settings(self, file):
         try:
             with open(file) as fh:
                 settings = json.loads(fh.read())
@@ -153,7 +148,7 @@ class WebsocketClearone(object):
                 if any(device in s for s in devices):
                     device_list_count -= 1
 
-    def get_matched_ws(self,data):
+    def get_matched_ws(self, data):
         matched_commands = []
 
         for command in self.commands:
@@ -173,7 +168,7 @@ class WebsocketClearone(object):
     def recv_clearone(self):
         return self.clearone_device.rx_data()
 
-    def get_clearone_commands(self,data):
+    def get_clearone_commands(self, data):
         rx_commands = re.split("\r|OK>", data)
         is_command = lambda d: '#' in d
         rx_commands = list(filter(is_command, rx_commands))
@@ -195,30 +190,32 @@ class WebsocketClearone(object):
                                 )
 
     def _match_clearone_commands(self, rx_commands):
-            ws_commands = []
-            verboseprint(f'match this: {rx_commands}')
-            for rx_command in rx_commands:
-                verboseprint(f'First RX Command: {rx_command}')
-                rx_to_match = rx_command.strip()
-                for command in self.commands:
-                    regex = (command["clearone"]["set_command"] % ".*")
-                    verboseprint(f'Trying REGEX Match Expression: {regex} String {rx_to_match}')
-                    if re.match(regex,rx_to_match):
-                        verboseprint("Match=True")
-                        ws_commands.append(
-                            {
-                                "command" : command,
-                                "value" : self._get_value(rx_to_match, command)
-                            }
-                        )
-            verboseprint(f'Websocket Commands for Clients: {list(ws_commands)}')
-            return ws_commands
+        ws_commands = []
+        verboseprint(f'match this: {rx_commands}')
+        for rx_command in rx_commands:
+            verboseprint(f'First RX Command: {rx_command}')
+            rx_to_match = rx_command.strip()
+            for command in self.commands:
+                regex = (command["clearone"]["set_command"] % ".*")
+                verboseprint(
+                    f'Trying REGEX Match Expression: {regex} String {rx_to_match}'
+                    )
+                if re.match(regex, rx_to_match):
+                    verboseprint("Match=True")
+                    ws_commands.append(
+                        {
+                            "command": command,
+                            "value": self._get_value(rx_to_match, command)
+                        }
+                    )
+        verboseprint(f'Websocket Commands for Clients: {list(ws_commands)}')
+        return ws_commands
 
     def _get_value(self, clearone_rx, command):
-                set_command = command["clearone"]["set_command"].split()
-                clearone_rx = clearone_rx.split()
-                value_index = set_command.index("%s")
-                return float(clearone_rx[value_index])
+        set_command = command["clearone"]["set_command"].split()
+        clearone_rx = clearone_rx.split()
+        value_index = set_command.index("%s")
+        return float(clearone_rx[value_index])
 
 
 clients = []
@@ -241,8 +238,8 @@ class ws_Server(WebSocket):
                 verboseprint(matched_commands)
                 ws_clearone.send_clearone(matched_commands, command['value'])
         except Exception as e:
-                verboseprint("Something Went Wrong in handle: %s" % e)
-                self.remove_me(self)
+            verboseprint("Something Went Wrong in handle: %s" % e)
+            self.remove_me(self)
 
     def connected(self):
 
@@ -257,10 +254,10 @@ class ws_Server(WebSocket):
                     clients.append(self)
             else:
                 clients.append(self)
- 
+
         except Exception as e:
-                verboseprint("Something Went Wrong in connected: %s" % e)
-                self.remove_me(self)
+            verboseprint("Something Went Wrong in connected: %s" % e)
+            self.remove_me(self)
 
     def handle_close(self):
 
@@ -272,8 +269,8 @@ class ws_Server(WebSocket):
 
             print(self.address, f'closed: clients remaining={len(clients)}')
         except Exception as e:
-                verboseprint("Something Went Wrong in handle_close: %s" % e)
-                self.remove_me(self)
+            verboseprint("Something Went Wrong in handle_close: %s" % e)
+            self.remove_me(self)
 
     def remove_me(self):
         try:
@@ -283,9 +280,7 @@ class ws_Server(WebSocket):
             verboseprint("Couldn't remove client: %s" % e)
 
 
-
 def clearone_thread():
-
     while True:
         sleep(.01)
         if len(clients) > 0:
@@ -297,11 +292,12 @@ def clearone_thread():
                 message = json.dumps(commands)
                 if len(message) > 2:
                     for client in clients:
-                            verboseprint([f'Sending to client: {client}',f'Message: {message}'])
-                            client.send_message(message)
+                        verboseprint([f'Sending to client: {client}',f'Message: {message}'])
+                        client.send_message(message)
 
             except Exception as e:
                 verboseprint("Something Went Wrong: %s" % e)
+
 
 def clearone_keepalive_thread():
 
@@ -321,16 +317,18 @@ def clearone_keepalive_thread():
 
 def server_thread(port):
     server = WebSocketServer('', port, ws_Server)
-    print ("Starting Web socket server")
-    server.serve_forever()  
+    print("Starting Web socket server")
+    server.serve_forever()
 
-ws_clearone = None 
+
+ws_clearone = None
 verboseprint = lambda s: None
+
 
 def main():
     global verboseprint
     global ws_clearone
-    print ("-"*80 + "\nClearone Websocket Controller\n" + "-"*80)
+    print("-"*80 + "\nClearone Websocket Controller\n" + "-"*80)
     args = get_args()
     if args.verbose:
         verboseprint = lambda s: pprint(s)
@@ -346,7 +344,8 @@ def main():
     clearone_keepalive = Thread(target=clearone_keepalive_thread)
     clearone_keepalive.start()
 
-def _map(value, leftMin, leftMax, rightMin, rightMax): 
+
+def _map(value, leftMin, leftMax, rightMin, rightMax):
     leftSpan = leftMax - leftMin
     rightSpan = rightMax - rightMin
     valueScaled = float(value - leftMin) / float(leftSpan)
@@ -360,13 +359,13 @@ def get_args():
     )
     required_argument = parser.add_argument_group("required arguments")
     required_argument.add_argument(
-        "-s", 
+        "-s",
         "--settings",
         help="Setiings JSON file",
         required=True
     )
     required_argument.add_argument(
-        "-p", 
+        "-p",
         "--port",
         help="Specify Websocket Port",
         required=True
@@ -378,7 +377,9 @@ def get_args():
         action='store_true',
         help="Enable extended output"
     )
-    
+
     return(parser.parse_args())
 
-main()
+
+if __name__ == '__main__':
+    main()
