@@ -381,10 +381,6 @@ def get_args():
 
     return(parser.parse_args())
 
-<<<<<<< HEAD
-if __name__ == "__main__":
-=======
 
-if __name__ == '__main__':
->>>>>>> 978410ff6b0fb4004c89209b69435282a2e8d051
+if __name__ == "__main__":
     main()

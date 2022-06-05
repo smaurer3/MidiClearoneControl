@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 import websockcontrol
 import argparse
 from time import sleep
