@@ -40,6 +40,7 @@ class Clearone(object):
 
     def connect(self, clearone_ip):
         while True:
+            sleep(.1)
             try:
                 self.device = socket.socket()
                 self.device.connect((clearone_ip, self.telnet_port))
@@ -55,7 +56,7 @@ class Clearone(object):
 
     def send_login(self, clearone_user, clearone_pass):
         self.device.send((clearone_user + "\r").encode())
-        while self.device.recv(512).find(('pass'.encode())) < 0:
+        while self.device.recv(512).find('pass'.encode()) < 0:
             pass
         self.device.send((clearone_pass + "\r").encode())
         while self.device.recv(512).find('Authenticated'.encode()) < 0:
@@ -198,9 +199,9 @@ class WebsocketClearone(object):
             rx_to_match = rx_command.strip()
             for command in self.commands:
                 regex = (command["clearone"]["set_command"] % ".*")
-                verboseprint(
-                    f'Trying REGEX Match Expression: {regex} String {rx_to_match}'
-                    )
+                #verboseprint(
+                #    f'Trying REGEX Match Expression: {regex} String {rx_to_match}'
+                #    )
                 if re.match(regex, rx_to_match):
                     verboseprint("Match=True")
                     ws_commands.append(
