@@ -241,10 +241,12 @@ class ws_Server(WebSocket):
                 ws_clearone.send_clearone(matched_commands, command['value'])
         except Exception as e:
             verboseprint("Something Went Wrong in handle: %s" % e)
-            self.remove_me(self)
+            try:
+                self.remove_me(self)
+            except Exception as e:
+                verboseprint("Couldn't remove client: %s" % e)
 
     def connected(self):
-
         try:
             verboseprint('WS Client connected')
             if len(clients) == 0:
@@ -256,13 +258,14 @@ class ws_Server(WebSocket):
                     clients.append(self)
             else:
                 clients.append(self)
-
         except Exception as e:
             verboseprint("Something Went Wrong in connected: %s" % e)
-            self.remove_me(self)
+            try:
+                self.remove_me(self)
+            except Exception as e:
+                verboseprint("Couldn't remove client: %s" % e)
 
     def handle_close(self):
-
         verboseprint('WS Client Disconnected')
         try:
             clients.remove(self)
@@ -272,7 +275,10 @@ class ws_Server(WebSocket):
             print(self.address, f'closed: clients remaining={len(clients)}')
         except Exception as e:
             verboseprint("Something Went Wrong in handle_close: %s" % e)
-            self.remove_me(self)
+            try:
+                self.remove_me(self)
+            except Exception as e:
+                verboseprint("Couldn't remove client: %s" % e)
 
     def remove_me(self):
         try:
@@ -280,6 +286,7 @@ class ws_Server(WebSocket):
             clients.remove(self)
         except Exception as e:
             verboseprint("Couldn't remove client: %s" % e)
+
 
 
 def clearone_thread():
@@ -318,6 +325,7 @@ def clearone_keepalive_thread():
 
 
 def server_thread(port):
+    
     server = WebSocketServer('', port, ws_Server)
     print("Starting Web socket server")
     server.serve_forever()
