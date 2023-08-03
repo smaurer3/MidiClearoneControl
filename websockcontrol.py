@@ -326,7 +326,7 @@ def clearone_keepalive_thread():
 
 def server_thread(port):
     
-    server = WebSocketServer('', port, ws_Server)
+    server = WebSocketServer('0.0.0.0', port, ws_Server)
     print("Starting Web socket server")
     server.serve_forever()
 
@@ -338,7 +338,7 @@ verboseprint = lambda s: None
 def main():
     global verboseprint
     global ws_clearone
-    print("-"*80 + "\nClearone Websocket Controller\n" + "-"*80)
+    print("\n" + "-"*80 + "\nClearone Websocket Controller\n" + "-"*80 + "\n")
     args = get_args()
     if args.verbose:
         verboseprint = lambda s: pprint(s)
