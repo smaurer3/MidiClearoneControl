@@ -32,9 +32,9 @@ class Clearone(object):
                 "No response from Clearone, waiting %s to retry" % retry_delay
                 )
             sleep(retry_delay)
-            retry_delay += 1
-            if retry_delay > 20:
-                raise Exception("Could Not Connnect To Clearone")
+            retry_delay += 2
+            if retry_delay > 60:
+                retry_delay = 60
 
         return self.authenticate(self.username, self.password)
 
@@ -190,6 +190,11 @@ class WebsocketClearone(object):
             self.clearone_device.send_command(
                                 clearone_command["get_command"]
                                 )
+    
+    def get_input_status(self, commands):
+        for command in commands:
+            clearone_command = command['clearone']['get_command']
+            self.clearone_device.send_command(clearone_command)                              
 
     def _match_clearone_commands(self, rx_commands):
         ws_commands = []
@@ -235,6 +240,10 @@ class ws_Server(WebSocket):
 
             elif command["command"] == "_refresh_":
                 ws_clearone.get_clearone_status()
+            elif command["command"] == "_input_status_":
+                matched_commands = ws_clearone.get_matched_ws(command['value'])
+                verboseprint(matched_commands)
+                ws_clearone.get_input_status(matched_commands)
             else:
                 matched_commands = ws_clearone.get_matched_ws(command['command'])
                 verboseprint(matched_commands)
