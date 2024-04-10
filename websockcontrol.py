@@ -29,13 +29,17 @@ class Clearone(object):
 
         retry_delay = 10
         verboseprint("First Attempt to connect...")
+        retries = 0
         while not self.connect(self.hostname):
             print(
                 "No response from Clearone, waiting %s to retry" % retry_delay
                 )
             sleep(retry_delay)
-
-
+            retries += 1
+            if retries > 5:
+                verboseprint("Unable to Connect to clearone")
+                return False
+             
         return self.authenticate(self.username, self.password)
 
     def connect(self, clearone_ip):
@@ -308,7 +312,7 @@ def clearone_thread():
 
         else:
                 ws_clearone.connect_clearone()
-                sleep(10)
+              
             
 
 
