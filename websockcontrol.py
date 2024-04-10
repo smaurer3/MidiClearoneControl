@@ -12,6 +12,14 @@ import time
 import traceback
 
 
+
+clients = []
+ws_clearone = None
+verboseprint = lambda s: None
+clearone_connected = False
+tx_timer = 0
+tx_timeout = False
+
 class Clearone(object):
     def __init__(self, hostname, username, password):
         self.telnet_port = 23
@@ -43,12 +51,10 @@ class Clearone(object):
         return self.authenticate(self.username, self.password)
 
     def connect(self, clearone_ip):
-        global clearone_connected
         try:
             self.device = socket.socket()
             self.device.settimeout(5)
             self.device.connect((clearone_ip, self.telnet_port))
-            clearone_connected = True
             return True
         except:
             return False
@@ -68,6 +74,7 @@ class Clearone(object):
             if self.device.recv(512).find('Invalid'.encode()) < 0:
                 return(False)
             pass
+        ws_clearone.get_clearone_status()
         return(True)
 
     def send_data(self, data):
@@ -195,6 +202,7 @@ class WebsocketClearone(object):
         return ws_commands
 
     def get_clearone_status(self):
+        verboseprint("Getting statatus of Clearone")
         for command in self.commands:
             clearone_command = command["clearone"]
             self.clearone_device.send_command(
@@ -235,7 +243,7 @@ class WebsocketClearone(object):
         return float(clearone_rx[value_index])
 
 
-clients = []
+
 
 
 class ws_Server(WebSocket):
@@ -281,8 +289,6 @@ class ws_Server(WebSocket):
 def clearone_thread():
     global clearone_connected, tx_timer, tx_timeout
     while True:
-        sleep(.01)
-
         if clearone_connected:
             if (time.time() > tx_timer) and tx_timeout:
                 verboseprint("Sent data and did not receive a response within 5 seconds")
@@ -311,40 +317,32 @@ def clearone_thread():
                 verboseprint(traceback.format_exc())
 
         else:
-                ws_clearone.connect_clearone()
+                clearone_connected = ws_clearone.connect_clearone()
               
             
 
 
 def clearone_keepalive_thread():
     global clearone_connected
-    timer = time.time() + 60
     verboseprint("Keep Alive Started")
     while True:
-        sleep(10)
+        sleep(60)
         if clearone_connected:
-            try:
-                if time.time() > timer:
-                    verboseprint("Keep alive - sending request")
-                    ws_clearone.send_keepalive()
-                    timer = time.time() + 60
+            try:                
+                verboseprint("Keep alive - sending request")
+                ws_clearone.send_keepalive()
             except Exception as e:
                 verboseprint("Something Went Wrong (clearone_keep_alive): %s" % e)
                 clearone_connected = False
 
 
 def server_thread(port):
-    
     server = WebSocketServer('0.0.0.0', port, ws_Server)
     print("Starting Web socket server")
     server.serve_forever()
 
 
-ws_clearone = None
-verboseprint = lambda s: None
-clearone_connected = False
-tx_timer = 0
-tx_timeout = False
+
 def main():
     global verboseprint
     global ws_clearone
