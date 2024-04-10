@@ -9,6 +9,7 @@ import re
 from time import sleep
 from pprint import pprint
 import time
+import traceback
 
 
 class Clearone(object):
@@ -27,26 +28,26 @@ class Clearone(object):
             verboseprint("Unable to close, probably wasn't connected")
 
         retry_delay = 10
+        verboseprint("First Attempt to connect...")
         while not self.connect(self.hostname):
             print(
                 "No response from Clearone, waiting %s to retry" % retry_delay
                 )
             sleep(retry_delay)
-            retry_delay += 2
-            if retry_delay > 60:
-                retry_delay = 60
+
 
         return self.authenticate(self.username, self.password)
 
     def connect(self, clearone_ip):
-        while True:
-            sleep(.1)
-            try:
-                self.device = socket.socket()
-                self.device.connect((clearone_ip, self.telnet_port))
-                return True
-            except:
-                return False
+        global clearone_connected
+        try:
+            self.device = socket.socket()
+            self.device.settimeout(5)
+            self.device.connect((clearone_ip, self.telnet_port))
+            clearone_connected = True
+            return True
+        except:
+            return False
 
     def authenticate(self, clearone_user, clearone_pass, ):
         while self.device.recv(512).find('user'.encode()) < 0:
@@ -66,28 +67,31 @@ class Clearone(object):
         return(True)
 
     def send_data(self, data):
+        global clearone_connected, tx_timer, tx_timeout
+        if not clearone_connected:
+            verboseprint("Trying to send data but clearone not connected")
+            return (False)
+        data = data.strip()
         data = data.strip()
         try:
             verboseprint("Sending to Clearone: '%s'" % data)
             self.device.send((data + "\r").encode())
-            return (True)
+            tx_timer = time.time() + 5
+            tx_timeout = True
+
         except Exception as e:
             verboseprint("Failed to send data: %s - %s" % (data, e))
-            return(False)
+            clearone_connected = False
+
 
     def send_command(self,command):
-        if self.send_data((command + "\r")):
-            return(True)
-        self.login()
-        if self.send_data((command + "\r")):
-            return(True)
-        return(False)
+        return self.send_data((command + "\r"))
 
     def rx_data(self):
         try:
             msg = self.device.recv(512).decode('utf-8')
             verboseprint("RAW Data Received: %s" % msg)
-        except:
+        except Exception as e:
             return(False)
         return(msg)
 
@@ -114,9 +118,11 @@ class WebsocketClearone(object):
         return self.clearone_device.login()
 
     def disconnect_clearone(self):
+        global clearone_connected
         verboseprint("Disconnecting")
         self.clearone_device.close()
         self.clearone_device = None
+        clearone_connected = False
 
     def load_commands(self):
         settings = self._load_settings(self.settings_file)
@@ -249,88 +255,78 @@ class ws_Server(WebSocket):
                 verboseprint(matched_commands)
                 ws_clearone.send_clearone(matched_commands, command['value'])
         except Exception as e:
-            verboseprint("Something Went Wrong in handle: %s" % e)
-            try:
-                self.remove_me(self)
-            except Exception as e:
-                verboseprint("Couldn't remove client: %s" % e)
+            verboseprint("Something Went Wrong (ws_Server.handle): %s" % e)
+
 
     def connected(self):
-        try:
-            verboseprint('WS Client connected')
-            if len(clients) == 0:
-                try:
-                    ws_clearone.disconnect_clearone()
-                except:
-                    verboseprint("DSP was not connected")
-                if ws_clearone.connect_clearone():
-                    clients.append(self)
-            else:
-                clients.append(self)
-        except Exception as e:
-            verboseprint("Something Went Wrong in connected: %s" % e)
-            try:
-                self.remove_me(self)
-            except Exception as e:
-                verboseprint("Couldn't remove client: %s" % e)
+        clients.append(self)
+        verboseprint('WS Client connected')
+            
 
     def handle_close(self):
         verboseprint('WS Client Disconnected')
         try:
             clients.remove(self)
-            if len(clients) == 0:
-                ws_clearone.disconnect_clearone()
-
             print(self.address, f'closed: clients remaining={len(clients)}')
         except Exception as e:
-            verboseprint("Something Went Wrong in handle_close: %s" % e)
-            try:
-                self.remove_me(self)
-            except Exception as e:
-                verboseprint("Couldn't remove client: %s" % e)
+            verboseprint("Something Went Wrong (ws_server.handle_close: %s" % e)
 
-    def remove_me(self):
-        try:
-            print("Trying to remove client")
-            clients.remove(self)
-        except Exception as e:
-            verboseprint("Couldn't remove client: %s" % e)
 
 
 
 def clearone_thread():
+    global clearone_connected, tx_timer, tx_timeout
     while True:
         sleep(.01)
-        if len(clients) > 0:
+
+        if clearone_connected:
+            if (time.time() > tx_timer) and tx_timeout:
+                verboseprint("Sent data and did not receive a response within 5 seconds")
+                clearone_connected = False
+                ws_clearone.disconnect_clearone()
+                continue
             try:
                 data_rx = ws_clearone.recv_clearone()
-                clearone_commands = ws_clearone.get_clearone_commands(data_rx)
-                verboseprint(clearone_commands)
-                commands = ws_clearone.generate_ws_command(clearone_commands)
-                message = json.dumps(commands)
-                if len(message) > 2:
-                    for client in clients:
-                        verboseprint([f'Sending to client: {client}',f'Message: {message}'])
-                        client.send_message(message)
-
+                if data_rx:
+                    tx_timeout = False
+                    clearone_commands = ws_clearone.get_clearone_commands(data_rx)
+                    verboseprint(clearone_commands)
+                    commands = ws_clearone.generate_ws_command(clearone_commands)
+                    message = json.dumps(commands)
+                    if len(message) > 2:
+                        for client in clients:
+                            verboseprint([f'Sending to client: {client}',f'Message: {message}'])
+                            client.send_message(message)
+            except (socket.timeout, socket.error):
+                verboseprint("Socket Timeout")
+                clearone_connected = False
+                ws_clearone.disconnect_clearone()
+            
             except Exception as e:
-                verboseprint("Something Went Wrong: %s" % e)
+                verboseprint("Something Went Wrong (clearone_thread): %s" % e)
+                verboseprint(traceback.format_exc())
+
+        else:
+                ws_clearone.connect_clearone()
+                sleep(10)
+            
 
 
 def clearone_keepalive_thread():
-
+    global clearone_connected
     timer = time.time() + 60
     verboseprint("Keep Alive Started")
     while True:
         sleep(10)
-        if len(clients) > 0:
+        if clearone_connected:
             try:
                 if time.time() > timer:
                     verboseprint("Keep alive - sending request")
                     ws_clearone.send_keepalive()
                     timer = time.time() + 60
             except Exception as e:
-                verboseprint("Something Went Wrong: %s" % e)
+                verboseprint("Something Went Wrong (clearone_keep_alive): %s" % e)
+                clearone_connected = False
 
 
 def server_thread(port):
@@ -342,8 +338,9 @@ def server_thread(port):
 
 ws_clearone = None
 verboseprint = lambda s: None
-
-
+clearone_connected = False
+tx_timer = 0
+tx_timeout = False
 def main():
     global verboseprint
     global ws_clearone
