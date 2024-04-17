@@ -2,9 +2,10 @@
 import websockcontrol
 import argparse
 from time import sleep
-
 def main():
+
     args = get_args()
+
     ws = websockcontrol
     
     wsc = ws.WebsocketClearone(args.settings)
@@ -12,7 +13,7 @@ def main():
     commands = load_commands(args.commands)
     for command in commands:
         print(command)
-        wsc.clearone_device.send_command(command)
+        print(wsc.clearone_device.send_command(command))
         sleep(.05)
     
 def load_commands(file):  

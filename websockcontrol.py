@@ -29,12 +29,14 @@ class Clearone(object):
         self.password = password
 
     def login(self):
+        global clearone_connected, tx_timeout
         try:
             self.device.close()
-            self.device = None
+            self.device = None  
         except:
             verboseprint("Unable to close, probably wasn't connected")
-
+        clearone_connected = False
+        tx_timeout = False
         retry_delay = 10
         verboseprint("First Attempt to connect...")
         retries = 0
@@ -55,26 +57,34 @@ class Clearone(object):
             self.device = socket.socket()
             self.device.settimeout(5)
             self.device.connect((clearone_ip, self.telnet_port))
+            verboseprint("Telnet Connection Opened")
             return True
         except:
+            verboseprint("Unable to open telnet connection")
             return False
 
     def authenticate(self, clearone_user, clearone_pass, ):
+        verboseprint("Waiting for 'user' prompt...")
         while self.device.recv(512).find('user'.encode()) < 0:
             pass
         login = self.send_login(clearone_user, clearone_pass)
         return(login)
 
     def send_login(self, clearone_user, clearone_pass):
+        verboseprint("Sending username...")
         self.device.send((clearone_user + "\r").encode())
+        verboseprint("Waiting for 'pass' prompt...")
         while self.device.recv(512).find('pass'.encode()) < 0:
             pass
+        verboseprint("Sending password...")
         self.device.send((clearone_pass + "\r").encode())
+        verboseprint("Wainting for confirmation 'Authenticated / Invalid'...")
         while self.device.recv(512).find('Authenticated'.encode()) < 0:
             if self.device.recv(512).find('Invalid'.encode()) < 0:
+                verboseprint("Authentication invalid")
                 return(False)
             pass
-        ws_clearone.get_clearone_status()
+        verboseprint("Authentication Succuseful")
         return(True)
 
     def send_data(self, data):
@@ -317,7 +327,12 @@ def clearone_thread():
                 verboseprint(traceback.format_exc())
 
         else:
-                clearone_connected = ws_clearone.connect_clearone()
+                try:
+                    clearone_connected = ws_clearone.connect_clearone()
+                except Exception as e:
+                    verboseprint("Something Went Wrong (clearone_keep_alive): %s" % e)
+                    verboseprint(traceback.format_exc())
+                    clearone_connected = False
               
             
 
