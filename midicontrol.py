@@ -185,11 +185,10 @@ class MidiClearone(object):
     def clearone_to_midi_gpio(self, data): 
         def match_command(command):       
             rx_to_match = rx_command.strip()
-            regex = (self.commands[command]["clearone"]["set_command"] % ".*")
+            regex = (command["clearone"]["set_command"] % ".*")
             return re.match(regex,rx_to_match)
               
         def process_match(command):
-            command = self.commands[command]
             clamp = lambda n: max(min(127, n), 0)
             def match_gpio(index):
                 if 'data' in self.gpio[index]:
@@ -297,7 +296,7 @@ class MidiClearone(object):
         midi_bytes.data = data[1]
         
         def match_midi(command):
-            midi_command = self.commands[command]["midi"]
+            midi_command = command["midi"]
             if "data" in midi_command:
                 data = midi_bytes.data == midi_command["data"]
             else:
@@ -305,7 +304,6 @@ class MidiClearone(object):
             return (midi_command["status"] == midi_bytes.status and data)
         
         def process_match(command):
-            command = self.commands[command]
             def clearone_value():
                 min = command["clearone"]["min"]
                 max = command["clearone"]["max"]
@@ -425,7 +423,7 @@ class MidiClearone(object):
 
     def send_defaults_to_clearone(self):
         for command in self.commands:
-            clearone_command = self.commands[command]["clearone"]
+            clearone_command = command["clearone"]
             self.clearone_device.send_command(
                                 clearone_command["set_command"]
                                 % clearone_command["default"]
@@ -443,7 +441,7 @@ class MidiClearone(object):
 
     def get_clearone_status(self):
         for command in self.commands:
-            clearone_command = self.commands[command]["clearone"]
+            clearone_command = command["clearone"]
             self.clearone_device.send_command(
                                 clearone_command["get_command"]
                                 )
