@@ -9,9 +9,9 @@
 
     "midi_controller" : {
         "in_port" : 
-            "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0",
+            "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 24:0",
         "out_port" : 
-            "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0"
+            "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 24:0"
     },
  
     "commands" : [

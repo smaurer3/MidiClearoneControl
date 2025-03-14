@@ -3,7 +3,7 @@ import mido
 import argparse  
 import json
 from time import sleep
-import thread
+import threading  # Updated from 'thread' to 'threading'
 import sys
 import socket
 from collections import namedtuple
@@ -13,7 +13,7 @@ try:
     import RPi.GPIO as GPIO    
 except ImportError:
     pass
-class Clearone(object):
+class Clearone:
     def __init__(self, hostname, username, password):
         self.telnet_port = 23
         self.device = None
@@ -24,77 +24,81 @@ class Clearone(object):
 
     def login(self):
         try:
-            self.device.close()
+            if self.device:
+                self.device.close()
             self.device = None
-        except:
+        except Exception:
             pass
-        retry_delay = 10
         
+        retry_delay = 10
         while not self.connect(self.hostname):
-            print("No response from Clearone, waiting %s to retry" % retry_delay)
+            print(f"No response from Clearone, waiting {retry_delay} seconds to retry")
             sleep(retry_delay)    
             retry_delay += 1
             if retry_delay > 20:
-                raise Exception("Could Not Connnect To Clearone")
+                raise Exception("Could Not Connect To Clearone")
 
         status = self.authenticate(self.username, self.password)
         if not status:
             raise Exception("Could not authenticate Clearone")
 
     def connect(self, clearone_ip): 
-        while True:
-            try:
-                self.device = socket.socket()
-                self.device.connect((clearone_ip, self.telnet_port))
-                return True
-            except: 
-                return False
+        try:
+            self.device = socket.socket()
+            self.device.connect((clearone_ip, self.telnet_port))
+            return True
+        except Exception: 
+            return False
 
-    def authenticate(self, clearone_user, clearone_pass, ):    
-        while self.device.recv(512).find('user') < 0:
+    def authenticate(self, clearone_user, clearone_pass):    
+        while self.device.recv(512).find(b'user') < 0:
             pass
         login = self.send_login(clearone_user, clearone_pass)  
-        return(login)
+        return login
 
     def send_login(self, clearone_user, clearone_pass):
-        self.device.send(clearone_user + "\r")
-        while self.device.recv(512).find('pass') < 0:
+        self.device.send((clearone_user + "\r").encode())
+        while self.device.recv(512).find(b'pass') < 0:
             pass
-        self.device.send(clearone_pass + "\r")
-        while self.device.recv(512).find('Authenticated') < 0:
-            if self.device.recv(512).find('Invalid') < 0:
-                return(False)
-            pass
-        return(True)
+        self.device.send((clearone_pass + "\r").encode())
+        while True:
+            response = self.device.recv(512)
+            if b'Authenticated' in response:
+                return True
+            if b'Invalid' in response:
+                return False
 
     def send_data(self, data):
         data = data.strip()
         try:
-            verboseprint("Sending to Clearone: '%s'" % data)
-            self.device.send(data + '\r')
-            return (True)
+            if "verboseprint" in globals():
+                verboseprint(f"Sending to Clearone: '{data}'")
+            self.device.send((data + '\r').encode())
+            return True
         except Exception as e:
-            verboseprint("Failed to send data: %s - %s" % (data, e))
-            return(False)
+            if "verboseprint" in globals():
+                verboseprint(f"Failed to send data: {data} - {e}")
+            return False
         
-    def send_command(self,command):
+    def send_command(self, command):
         if self.send_data(command + "\r"):
-            return(True)
+            return True
         self.login()
-        if self.send_data(command + "\r"):
-            return(True)
-        return(False)
-        
+        return self.send_data(command + "\r")
+
     def rx_data(self):
         try:
-            msg = self.device.recv(512)
-            verboseprint("RAW Data Received: %s" % msg)
-        except:
-            return(False)
-        return(msg)
+            msg = self.device.recv(512).decode(errors="ignore")
+            if "verboseprint" in globals():
+                verboseprint(f"RAW Data Received: {msg}")
+            return msg
+        except Exception:
+            return False
     
     def close(self):
-        self.device.close()
+        if self.device:
+            self.device.close()
+
 
 class Midi(object):
     def __init__(self,in_port, out_port):
@@ -108,10 +112,10 @@ class Midi(object):
     def list_midi_ports(self):
             port_msg = ("Invalid Midi Port\n" + "-"*40 + "\n\nAvailable Input Ports:\n")
             for p in mido.get_input_names():
-                port_msg += p
+                port_msg += p + "\n"
             port_msg += ("\n" + "-"*40 + "\nAvailable Output Ports:\n")
             for p in mido.get_output_names():
-                port_msg += p
+                port_msg += p + "\n"
             port_msg += (
                     "\n" + "-"*40 + "\nEnsure midi device is connected\n"
                     "\nChange midi ports in  settings.py\n\n"
@@ -378,20 +382,32 @@ class MidiClearone(object):
                     else:
                         if pin_triggered == pin:
                             midi_msg_sent = False	
-                        
-    def start_threads(self): 
-        try:				
-            self.run_thread = True	
-            thread.start_new_thread( self.midi_thread, ())			
-            thread.start_new_thread( self.clearone_thread, ())
+
+
+    def start_threads(self):
+        try:
+            self.run_thread = True
+            self.stop_event = threading.Event()  # Add event for stopping threads
+
+            threads = [
+                threading.Thread(target=self.midi_thread, daemon=True),
+                threading.Thread(target=self.clearone_thread, daemon=True)
+            ]
+
             if self.gpio_enabled:
-                thread.start_new_thread( self.gpio_rx_thread, ())
-        except:
-            raise Exception("Unable to start Threads")
+                threads.append(threading.Thread(target=self.gpio_rx_thread, daemon=True))
+
+            for t in threads:
+                t.start()
+
+        except Exception as e:
+            raise Exception(f"Unable to start Threads: {e}")
+
         print("\nReady and Running...")
-        while self.run_thread:    
+        while self.run_thread:
             sleep(300)
             self.clearone_device.send_data("#** VER")
+           
                                                 
     def midi_data_received(self,data):
         verboseprint("Data Received from Midi Device: %s" % data)
