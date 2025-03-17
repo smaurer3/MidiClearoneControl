@@ -52,8 +52,8 @@ JSON File Configuration (Descriptors start with #):
                 "out_port" :               #Midi Out port name, leave this blank and run program to get a list of available ports
                     "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0"
             },
-            "commands" : {            #Clearone command definitions and associated midi commands
-                "_1" : {              #Identifyer for command, can be anything, I usually run them in order as _1, _2, _3 etc..
+            "commands" : [            #Clearone command definitions and associated midi commands
+                 {              #Identifyer for command, can be anything, I usually run them in order as _1, _2, _3 etc..
                     "clearone": {     #Clearone Command Settings
                         "set_command" : "#H2 GAIN A P %s A",      #Command to send when setting a value, substitue the value to change with %s
                         "get_command" : "#H2 GAIN A P",       #Command to send to when querying a setting 
@@ -67,7 +67,7 @@ JSON File Configuration (Descriptors start with #):
                     },
                     "command" : "lectern_fader"  #Websocket command,
                 },  
-                "_10" : {
+                 {
                     "clearone": {
                         "set_command" : "#H2 MUTE A P %s",
                         "get_command" : "#H2 MUTE A P",
@@ -82,7 +82,7 @@ JSON File Configuration (Descriptors start with #):
                     },
                     "command" : "lectern_mute" 
                 },
-                "_11" : {
+                 {
                     "clearone": {
                         "set_command" : "#H2 MUTE B P %s",
                         "get_command" : "#H2 MUTE B P",
@@ -97,7 +97,7 @@ JSON File Configuration (Descriptors start with #):
                     },
                     "command" : "roving_fader"
                 },
-                "_16" : {
+                 {
                     "clearone": {
                         "set_command" : "#H2 FILTER H P 1 6 20.00 %s 3.70",
                         "get_command" : "#H2 FILTER H P 1",
@@ -113,7 +113,7 @@ JSON File Configuration (Descriptors start with #):
                         "status" : 176,
                         "data" : 22
                     } 
-            }, 
+            ], 
             "gpio" : {
                 "_1" : {
                     "in_pin" : 31,
