@@ -31,7 +31,7 @@ Websocekt Server
       Json key "command" specifies the command value for clients to send and recevie data about clearone command.  Json value will send in %s position of send command.
       Websocket server responds in same format when an update occurs.
       
-``xample websocket json payloads:
+Example websocket json payloads:
       
         {  "command" : "program_fader"  , "value" : -3.5  }
         {  "command" : "lectern_mute"  , "value" : 1 }
