@@ -1,5 +1,12 @@
-# Midi Clearone Control
-Control Clearone Converge DSP from any Midi Control Device.
+# Midi and Websocket Clearone Control
+Control Clearone Converge DSP from any Midi Control Device and Websocket Client.
+
+midicontrol.py - Midi Controller
+websockcontrol.py - Websocket Control Server
+
+Run with -h argument to get help output.
+
+"midi" key is optional in config if midi control is not required for a command (websocket use only)
 
 Tested with:
   TouchOSC with TouchOSC Bridge
@@ -14,11 +21,19 @@ Features:
       Send default Settings
       Configured via a json file
       
-Supports:
+Midi Supports:
       Absolute Encoders
       Incremental Encoders
       On/Off push buttons
       Momentary Push Buttons
+
+Websocekt Server
+      Json key "command" specifies the command value for clients to send and recevie data about clearone command.  Json value will send in %s position of send command.
+      Websocket server responds in same format when an update occurs.
+      
+      example websocket json payloads:
+        {  "command" : "program_fader"  , "value" : -3.5  }
+        {  "command" : "lectern_mute"  , "value" : 1 }
 
 JSON File Configuration (Descriptors start with #):
 
@@ -50,7 +65,8 @@ JSON File Configuration (Descriptors start with #):
             "midi" : {
                 "type" : "absolute",    
                 "status" : 224
-            } 
+            },
+            "command" : "lectern_fader"  #Websocket command,
         },  
         "_10" : {
             "clearone": {
@@ -64,7 +80,8 @@ JSON File Configuration (Descriptors start with #):
                 "type" : "momentary",
                 "status" : 144,
                 "data" : 16
-            } 
+            },
+            "command" : "lectern_mute" 
         },
         "_11" : {
             "clearone": {
@@ -78,7 +95,8 @@ JSON File Configuration (Descriptors start with #):
                 "type" : "momentary",
                 "status" : 144,
                 "data" : 17
-            } 
+            },
+            "command" : "roving_fader"
         },
         "_16" : {
             "clearone": {
