@@ -53,7 +53,7 @@ JSON File Configuration (Descriptors start with #):
                     "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0"
             },
             "commands" : [            #Clearone command definitions and associated midi commands
-                 {              #Identifyer for command, can be anything, I usually run them in order as _1, _2, _3 etc..
+                 {              
                     "clearone": {     #Clearone Command Settings
                         "set_command" : "#H2 GAIN A P %s A",      #Command to send when setting a value, substitue the value to change with %s
                         "get_command" : "#H2 GAIN A P",       #Command to send to when querying a setting 
