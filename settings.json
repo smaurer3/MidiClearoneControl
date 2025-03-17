@@ -123,6 +123,33 @@
         },
         {
             "clearone": {
+                "set_command" : "#H2 GAIN 8 M %s A",
+                "get_command" : "#H2 GAIN 8 M",
+                "max" : 10,
+                "min" : -35,
+                "default" : 0
+            },
+            "midi" : {
+                "type" : "absolute",
+                "status" : 230
+            } 
+        },  
+        {
+            "clearone": {
+                "set_command" : "#H2 MUTE 8 M %s",
+                "get_command" : "#H2 MUTE 8 M",
+                "max" : 1,
+                "min" : 0,
+                "default" : 0
+            },
+            "midi" : {
+                "type" : "momentary",
+                "status" : 144,
+                "data" : 22
+            } 
+        },
+        {
+            "clearone": {
                 "set_command" : "#H2 MUTE B P %s",
                 "get_command" : "#H2 MUTE B P",
                 "max" : 1,
@@ -189,8 +216,131 @@
                 "type" : "momentary",        
                 "status" : 144,
                 "data" : 21
-        }
-            } 
+			}
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GMODE 1 %s",
+                "get_command" : "#H2 GMODE 1",
+                "max" : 2,
+                "min" : 1,
+                "default" : 1
+            },
+            "midi" : {
+                "type" : "momentary",        
+                "status" : 144,
+                "data" : 24
+			}
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GMODE 3 %s",
+                "get_command" : "#H2 GMODE 3",
+                "max" : 2,
+                "min" : 1,
+                "default" : 1
+            },
+            "midi" : {
+                "type" : "momentary",        
+                "status" : 144,
+                "data" : 25
+			}
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GMODE 4 %s",
+                "get_command" : "#H2 GMODE 4",
+                "max" : 2,
+                "min" : 1,
+                "default" : 1
+            },
+            "midi" : {
+                "type" : "momentary",        
+                "status" : 144,
+                "data" : 26
+			}
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GMODE 5 %s",
+                "get_command" : "#H2 GMODE 5",
+                "max" : 2,
+                "min" : 1,
+                "default" : 1
+            },
+            "midi" : {
+                "type" : "momentary",        
+                "status" : 144,
+                "data" : 27
+			}
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GMODE 6 %s",
+                "get_command" : "#H2 GMODE 6",
+                "max" : 2,
+                "min" : 1,
+                "default" : 1
+            },
+            "midi" : {
+                "type" : "momentary",        
+                "status" : 144,
+                "data" : 28
+			}
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GAIN 5 O %s A",
+                "get_command" : "#H2 GAIN 5 O",
+                "max" : 10,
+                "min" : -35,
+                "default" : 0
+            },
+            "midi" : {
+                "type" : "absolute",
+                "status" : 231
+            }
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 MUTE 5 O %s",
+                "get_command" : "#H2 MUTE 5 O",
+                "max" : 1,
+                "min" : 0,
+                "default" : 0
+            },
+            "midi" : {
+                "type" : "momentary",
+                "status" : 144,
+                "data" : 23
+            }
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 GAIN 6 O %s A",
+                "get_command" : "#H2 GAIN 6 O",
+                "max" : 10,
+                "min" : -35,
+                "default" : 0
+            },
+            "midi" : {
+                "type" : "absolute",
+                "status" : 231
+            }
+        },
+        {
+            "clearone": {
+                "set_command" : "#H2 MUTE 6 O %s",
+                "get_command" : "#H2 MUTE 6 O",
+                "max" : 1,
+                "min" : 0,
+                "default" : 0
+            },
+            "midi" : {
+                "type" : "momentary",
+                "status" : 144,
+                "data" : 23            }
+        } 
     ], 
     "gpio" : [
         {

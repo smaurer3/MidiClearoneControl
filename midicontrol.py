@@ -34,9 +34,9 @@ class Clearone:
         while not self.connect(self.hostname):
             print(f"No response from Clearone, waiting {retry_delay} seconds to retry")
             sleep(retry_delay)    
-            retry_delay += 1
-            if retry_delay > 20:
-                raise Exception("Could Not Connect To Clearone")
+            retry_delay += 2
+            if retry_delay > 16:
+                retry_delay = 60
 
         status = self.authenticate(self.username, self.password)
         if not status:
