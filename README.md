@@ -114,14 +114,14 @@ JSON File Configuration (Descriptors start with #):
                         "data" : 22
                     } 
             ], 
-            "gpio" : {
-                "_1" : {
+            "gpio" : [
+                 {
                     "in_pin" : 31,
                     "out_pin" : 35,
                     "status" : 144,
                     "data"  : 16
                 }
-            }  
+            ]  
         }
 
 
