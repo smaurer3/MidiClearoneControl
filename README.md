@@ -32,6 +32,7 @@ Websocekt Server
       Websocket server responds in same format when an update occurs.
       
       example websocket json payloads:
+      
         {  "command" : "program_fader"  , "value" : -3.5  }
         {  "command" : "lectern_mute"  , "value" : 1 }
 
@@ -45,14 +46,12 @@ JSON File Configuration (Descriptors start with #):
         "hostname" : "192.168.1.102", #Clearone Hostname / IP Address
         "startup_commands" : ["#H2 FEDR J 2","#H2 FEDR J 4"]  #Commands to send at startup
     }, 
-
     "midi_controller" : {         #Midi Specific Settings
         "in_port" :               #Midi In port name, leave this blank and run program to get a list of available ports
             "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0",
         "out_port" :               #Midi Out port name, leave this blank and run program to get a list of available ports
             "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 20:0"
     },
- 
     "commands" : {            #Clearone command definitions and associated midi commands
         "_1" : {              #Identifyer for command, can be anything, I usually run them in order as _1, _2, _3 etc..
             "clearone": {     #Clearone Command Settings
