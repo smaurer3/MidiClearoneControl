@@ -1,361 +1,791 @@
 {
-    "clearone" : {
-        "devices" : ["H2", "10"],
-        "user" : "clearone",
-        "password" : "converge",
-        "hostname" : "192.168.90.102",
-        "startup_commands" : ["#H2 FEDR 2 J","#H2 FEDR 4 J"]
-    }, 
-
-    "midi_controller" : {
-        "in_port" : 
-            "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 24:0",
-        "out_port" : 
-            "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 24:0"
-    },
- 
-    "commands" : [
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN A P %s A",
-                "get_command" : "#H2 GAIN A P",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 224
-            }
-        },
-
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN B P %s A",
-                "get_command" : "#H2 GAIN B P",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 225
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN C P %s A",
-                "get_command" : "#H2 GAIN C P",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 226
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN D P %s A",
-                "get_command" : "#H2 GAIN D P",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 227
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN E P %s A",
-                "get_command" : "#H2 GAIN E P",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 228
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#10 GAIN 1 F %s A",
-                "get_command" : "#10 GAIN 1 F",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 229
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN H P %s A",
-                "get_command" : "#H2 GAIN H P",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 232
-            } 
-        },  
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE A P %s",
-                "get_command" : "#H2 MUTE A P",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 16
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN 8 M %s A",
-                "get_command" : "#H2 GAIN 8 M",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 230
-            } 
-        },  
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE 8 M %s",
-                "get_command" : "#H2 MUTE 8 M",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 22
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE B P %s",
-                "get_command" : "#H2 MUTE B P",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 17
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE C P %s",
-                "get_command" : "#H2 MUTE C P",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 18
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE D P %s",
-                "get_command" : "#H2 MUTE D P",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 19
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE E P %s",
-                "get_command" : "#H2 MUTE E P",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 20
-            } 
-        },
-        {
-            "clearone": {
-                "set_command" : "#10 MUTE 1 F %s",
-                "get_command" : "#10 MUTE 1 F",
-                "max" : 1,
-                "min" : 0,
-                "default" : 1
-            },
-            "midi" : {
-                "type" : "momentary",        
-                "status" : 144,
-                "data" : 21
-			}
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GMODE 1 %s",
-                "get_command" : "#H2 GMODE 1",
-                "max" : 2,
-                "min" : 1,
-                "default" : 1
-            },
-            "midi" : {
-                "type" : "momentary",        
-                "status" : 144,
-                "data" : 24
-			}
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GMODE 3 %s",
-                "get_command" : "#H2 GMODE 3",
-                "max" : 2,
-                "min" : 1,
-                "default" : 1
-            },
-            "midi" : {
-                "type" : "momentary",        
-                "status" : 144,
-                "data" : 25
-			}
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GMODE 4 %s",
-                "get_command" : "#H2 GMODE 4",
-                "max" : 2,
-                "min" : 1,
-                "default" : 1
-            },
-            "midi" : {
-                "type" : "momentary",        
-                "status" : 144,
-                "data" : 26
-			}
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GMODE 5 %s",
-                "get_command" : "#H2 GMODE 5",
-                "max" : 2,
-                "min" : 1,
-                "default" : 1
-            },
-            "midi" : {
-                "type" : "momentary",        
-                "status" : 144,
-                "data" : 27
-			}
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GMODE 6 %s",
-                "get_command" : "#H2 GMODE 6",
-                "max" : 2,
-                "min" : 1,
-                "default" : 1
-            },
-            "midi" : {
-                "type" : "momentary",        
-                "status" : 144,
-                "data" : 28
-			}
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN 5 O %s A",
-                "get_command" : "#H2 GAIN 5 O",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 231
-            }
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE 5 O %s",
-                "get_command" : "#H2 MUTE 5 O",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 23
-            }
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 GAIN 6 O %s A",
-                "get_command" : "#H2 GAIN 6 O",
-                "max" : 10,
-                "min" : -35,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "absolute",
-                "status" : 231
-            }
-        },
-        {
-            "clearone": {
-                "set_command" : "#H2 MUTE 6 O %s",
-                "get_command" : "#H2 MUTE 6 O",
-                "max" : 1,
-                "min" : 0,
-                "default" : 0
-            },
-            "midi" : {
-                "type" : "momentary",
-                "status" : 144,
-                "data" : 23            }
-        } 
-    ], 
-    "gpio" : [
-        {
-            "in_pin" : 31,
-            "out_pin" : 35,
-            "status" : 144,
-            "data"  : 16
-        },
-        {
-            "in_pin" : 33,
-            "out_pin" : 37,
-            "status" : 144,
-            "data"  : 18
-        }
-    ]
-    
-
+	"clearone": {
+		"devices": [
+			"H2",
+			"10"
+		],
+		"user": "clearone",
+		"password": "converge",
+		"hostname": "192.168.90.102",
+		"startup_commands": [
+			"#H2 FEDR 2 J",
+			"#H2 FEDR 4 J"
+		]
+	},
+	"midi_controller": {
+		"in_port": "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 24:0",
+		"out_port": "iCON iControls_Pro(M) V1.04:iCON iControls_Pro(M) V1.04 MID 24:0"
+	},
+	"commands": [
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN A P %s A",
+				"get_command": "#H2 GAIN A P",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 224
+			},
+			"command": "lectern_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN B P %s A",
+				"get_command": "#H2 GAIN B P",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 225
+			},
+			"command": "roving_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN C P %s A",
+				"get_command": "#H2 GAIN C P",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 226
+			},
+			"command": "lapel_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN D P %s A",
+				"get_command": "#H2 GAIN D P",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 227
+			},
+			"command": "yellow_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN E P %s A",
+				"get_command": "#H2 GAIN E P",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 228
+			},
+			"command": "blue_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 1 F %s A",
+				"get_command": "#10 GAIN 1 F",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 229
+			},
+			"command": "program_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN H P %s A",
+				"get_command": "#H2 GAIN H P",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 232
+			},
+			"command": "main_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE A P %s",
+				"get_command": "#H2 MUTE A P",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 16
+			},
+			"command": "lectern_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 8 M %s A",
+				"get_command": "#H2 GAIN 8 M",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 230
+			},
+			"command": "piano_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 8 M %s",
+				"get_command": "#H2 MUTE 8 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 22
+			},
+			"command": "piano_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE B P %s",
+				"get_command": "#H2 MUTE B P",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 17
+			},
+			"command": "roving_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE C P %s",
+				"get_command": "#H2 MUTE C P",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 18
+			},
+			"command": "lapel_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE D P %s",
+				"get_command": "#H2 MUTE D P",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 19
+			},
+			"command": "yellow_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE E P %s",
+				"get_command": "#H2 MUTE E P",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 20
+			},
+			"command": "blue_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 1 F %s",
+				"get_command": "#10 MUTE 1 F",
+				"max": 1,
+				"min": 0,
+				"default": 1
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 21
+			},
+			"command": "program_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 9 L %s",
+				"get_command": "#10 MUTE 9 L",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 21
+			},
+			"command": "program_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 10 L %s",
+				"get_command": "#10 MUTE 10 L",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 21
+			},
+			"command": "program_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 1 %s",
+				"get_command": "#H2 GMODE 1",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 24
+			},
+			"command": "lectern_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 3 %s",
+				"get_command": "#H2 GMODE 3",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 25
+			},
+			"command": "roving_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 4 %s",
+				"get_command": "#H2 GMODE 4",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 26
+			},
+			"command": "lapel_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 5 %s",
+				"get_command": "#H2 GMODE 5",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 27
+			},
+			"command": "yellow_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 6 %s",
+				"get_command": "#H2 GMODE 6",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 28
+			},
+			"command": "blue_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 5 O %s A",
+				"get_command": "#H2 GAIN 5 O",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 231
+			},
+			"command": "stage_foldback_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 5 O %s",
+				"get_command": "#H2 MUTE 5 O",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 23
+			},
+			"command": "stage_foldback_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 6 O %s A",
+				"get_command": "#H2 GAIN 6 O",
+				"max": 10,
+				"min": -35,
+				"default": 0
+			},
+			"midi": {
+				"type": "absolute",
+				"status": 231
+			},
+			"command": "stage_foldback_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 6 O %s",
+				"get_command": "#H2 MUTE 6 O",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"midi": {
+				"type": "momentary",
+				"status": 144,
+				"data": 23
+			},
+			"command": "stage_foldback_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 PRESET %s 1",
+				"get_command": "#10 PRESET",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "main_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 PRESET %s 2",
+				"get_command": "#10 PRESET",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "main_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 1 O %s A",
+				"get_command": "#10 GAIN 1 O",
+				"max": 10,
+				"min": -35
+			},
+			"command": "foyer_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 1 O %s",
+				"get_command": "#10 MUTE 1 O",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "foyer_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 1 J %s A",
+				"get_command": "#H2 GAIN 1 J",
+				"max": 10,
+				"min": -35
+			},
+			"command": "ss_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 1 J %s",
+				"get_command": "#H2 MUTE 1 J",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "ss_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 3 J %s A",
+				"get_command": "#H2 GAIN 3 J",
+				"max": 10,
+				"min": -35
+			},
+			"command": "house_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 3 J %s",
+				"get_command": "#H2 MUTE 3 J",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "house_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 2 J %s A",
+				"get_command": "#H2 GAIN 2 J",
+				"max": 10,
+				"min": -35
+			},
+			"command": "baby_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 2 J %s",
+				"get_command": "#H2 MUTE 2 J",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "baby_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 7 M %s A",
+				"get_command": "#H2 GAIN 7 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "projector_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 7 M %s",
+				"get_command": "#H2 MUTE 7 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "projector_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 7 %s",
+				"get_command": "#H2 GMODE 7",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "projector_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 5 M %s A",
+				"get_command": "#10 GAIN 5 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "line_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 5 M %s",
+				"get_command": "#10 MUTE 5 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "line_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 5 %s",
+				"get_command": "#10 GMODE 5",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "line_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 6 M %s A",
+				"get_command": "#10 GAIN 6 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "line_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 6 M %s",
+				"get_command": "#10 MUTE 6 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "line_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 6 %s",
+				"get_command": "#10 GMODE 6",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "line_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 1 M %s A",
+				"get_command": "#10 GAIN 1 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "audience_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 1 M %s",
+				"get_command": "#10 MUTE 1 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "audience_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 1 %s",
+				"get_command": "#10 GMODE 1",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "audience_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 2 M %s A",
+				"get_command": "#10 GAIN 2 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "audience_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 2 M %s",
+				"get_command": "#10 MUTE 2 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "audience_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 2 %s",
+				"get_command": "#10 GMODE 2",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "audience_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GMODE 8 %s",
+				"get_command": "#H2 GMODE 8",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "piano_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 3 M %s A",
+				"get_command": "#10 GAIN 3 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "guitar_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 3 M %s",
+				"get_command": "#10 MUTE 3 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "guitar_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 3 %s",
+				"get_command": "#10 GMODE 3",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "guitar_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 4 M %s A",
+				"get_command": "#10 GAIN 4 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "wind_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 4 M %s",
+				"get_command": "#10 MUTE 4 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "wind_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 4 %s",
+				"get_command": "#10 GMODE 4",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "wind_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 7 M %s A",
+				"get_command": "#10 GAIN 7 M",
+				"max": 10,
+				"min": -35
+			},
+			"command": "violin_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 7 M %s",
+				"get_command": "#10 MUTE 7 M",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "violin_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GMODE 7 %s",
+				"get_command": "#10 GMODE 7",
+				"max": 2,
+				"min": 1,
+				"default": 1
+			},
+			"command": "violin_gate"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 GAIN 3 F %s A",
+				"get_command": "#10 GAIN 3 F",
+				"max": 10,
+				"min": -35
+			},
+			"command": "band_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#10 MUTE 3 F %s",
+				"get_command": "#10 MUTE 3 F",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "band_mute"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 GAIN 4 J %s A",
+				"get_command": "#H2 GAIN 4 J",
+				"max": 10,
+				"min": -35
+			},
+			"command": "foldback_fader"
+		},
+		{
+			"clearone": {
+				"set_command": "#H2 MUTE 4 J %s",
+				"get_command": "#H2 MUTE 4 J",
+				"max": 1,
+				"min": 0,
+				"default": 0
+			},
+			"command": "foldback_mute"
+		}
+	],
+	"gpio": [
+		{
+			"in_pin": 31,
+			"out_pin": 35,
+			"status": 144,
+			"data": 16
+		},
+		{
+			"in_pin": 33,
+			"out_pin": 37,
+			"status": 144,
+			"data": 18
+		}
+	]
 }

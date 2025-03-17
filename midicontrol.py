@@ -251,20 +251,23 @@ class MidiClearone(object):
 
             
             value = midi_value()
-            if 'data' not in command['midi']:
-                data = value    
-            else:
-                data = command["midi"]['data']
+            if 'midi' in command:
+                if 'data' not in command['midi']:
+                    data = value    
+                else:
+                    data = command["midi"]['data']
             
-            midi_bytes = namedtuple("midi_bytes", "status value data")
-            midi_bytes.status = int(command["midi"]['status'])
-            midi_bytes.value = int(value + .5)
-            midi_bytes.data = int(data + .5)
-            midi = create_midi(
-                                midi_bytes.status, 
-                                midi_bytes.value, 
-                                midi_bytes.data
-                            )
+                midi_bytes = namedtuple("midi_bytes", "status value data")
+                midi_bytes.status = int(command["midi"]['status'])
+                midi_bytes.value = int(value + .5)
+                midi_bytes.data = int(data + .5)
+                midi = create_midi(
+                                    midi_bytes.status, 
+                                    midi_bytes.value, 
+                                    midi_bytes.data
+                                )
+            else:
+                midi = {}
    
             gpios = filter(match_gpio, self.gpio)
             gpio = map(set_gpio, gpios)         

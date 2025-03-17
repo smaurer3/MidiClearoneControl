@@ -147,7 +147,7 @@ class WebsocketClearone(object):
 
     def load_commands(self):
         settings = self._load_settings(self.settings_file)
-        self.commands = settings["websocket"]
+        self.commands = settings["commands"]
         verboseprint(self.commands)
         self.clearone_settings = settings["clearone"]
 
