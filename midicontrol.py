@@ -303,6 +303,8 @@ class MidiClearone(object):
         midi_bytes.data = data[1]
         
         def match_midi(command):
+            if "midi" not in command:
+                return False
             midi_command = command["midi"]
             if "data" in midi_command:
                 data = midi_bytes.data == midi_command["data"]
@@ -355,13 +357,18 @@ class MidiClearone(object):
                 msg = self.midi.midi_in.receive()
                 self.midi_data_received(msg.bytes())
                 
+    
     def clearone_thread(self):  
         while self.run_thread: 
             try:
                 msg = self.clearone_device.rx_data()
-                self.clearone_data_received(msg)
+                if msg:
+                    self.clearone_data_received(msg)
+                else:
+                    sleep(0.01)  # 10ms sleep if no data
             except Exception as e: 
                 print("Clearone Thread Error: %s" % e)
+                sleep(1)  # pause before retrying login
                 self.clearone_device.login()
     
     def gpio_rx_thread(self): 
