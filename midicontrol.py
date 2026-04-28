@@ -42,12 +42,13 @@ class Clearone:
         if not status:
             raise Exception("Could not authenticate Clearone")
 
-    def connect(self, clearone_ip): 
+    def connect(self, clearone_ip):
         try:
             self.device = socket.socket()
+            self.device.settimeout(30)
             self.device.connect((clearone_ip, self.telnet_port))
             return True
-        except Exception: 
+        except Exception:
             return False
 
     def authenticate(self, clearone_user, clearone_pass):    
@@ -87,13 +88,13 @@ class Clearone:
         return self.send_data(command + "\r")
 
     def rx_data(self):
-        try:
-            msg = self.device.recv(512).decode(errors="ignore")
-            if "verboseprint" in globals():
-                verboseprint(f"RAW Data Received: {msg}")
-            return msg
-        except Exception:
-            return False
+        data = self.device.recv(512)
+        if not data:
+            raise ConnectionResetError("Clearone connection closed")
+        msg = data.decode(errors="ignore")
+        if "verboseprint" in globals():
+            verboseprint(f"RAW Data Received: {msg}")
+        return msg
     
     def close(self):
         if self.device:
@@ -358,18 +359,22 @@ class MidiClearone(object):
                 self.midi_data_received(msg.bytes())
                 
     
-    def clearone_thread(self):  
-        while self.run_thread: 
+    def clearone_thread(self):
+        while self.run_thread:
             try:
                 msg = self.clearone_device.rx_data()
                 if msg:
                     self.clearone_data_received(msg)
                 else:
-                    sleep(0.01)  # 10ms sleep if no data
-            except Exception as e: 
+                    sleep(0.01)
+            except Exception as e:
                 print("Clearone Thread Error: %s" % e)
-                sleep(1)  # pause before retrying login
-                self.clearone_device.login()
+                sleep(1)
+                try:
+                    self.clearone_device.login()
+                except Exception as login_e:
+                    print("Clearone reconnect failed: %s" % login_e)
+                    sleep(5)
     
     def gpio_rx_thread(self): 
             midi_msg_sent = False
